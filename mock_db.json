@@ -7,7 +7,8 @@
       "region": "VN - Vietnam",
       "title": "Weekly Community Gathering #12",
       "time": "2026-06-17T19:30",
-      "memberCount": 3
+      "memberCount": 3,
+      "participantCount": 45
     },
     {
       "id": "EVT_1718527200000",
@@ -16,7 +17,8 @@
       "region": "Global",
       "title": "Guild Esports League Weekly Match",
       "time": "2026-06-15T20:00",
-      "memberCount": 4
+      "memberCount": 4,
+      "participantCount": 60
     },
     {
       "id": "EVT_1718354400000",
@@ -25,7 +27,8 @@
       "region": "ID - Indonesia",
       "title": "Talkshow & AMA: Mod Orientation 2026",
       "time": "2026-06-13T15:00",
-      "memberCount": 2
+      "memberCount": 2,
+      "participantCount": 25
     }
   ],
   "members": [

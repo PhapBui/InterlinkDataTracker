@@ -16,7 +16,40 @@
  * 9. Copy URL nhận được (URL ứng dụng web) và dán vào biến NEXT_PUBLIC_SHEETS_API_URL trong file .env.local
  */
 
+// Đảm bảo tiêu đề cột luôn chính xác và không bị thiếu cột quan trọng
+function ensureHeaders() {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var submissionsSheet = ss.getSheetByName("Submissions") || ss.insertSheet("Submissions");
+  var membersSheet = ss.getSheetByName("Members") || ss.insertSheet("Members");
+  
+  // 1. Kiểm tra bảng Submissions
+  if (submissionsSheet.getLastRow() === 0) {
+    submissionsSheet.appendRow(["id", "timestamp", "submitter", "region", "title", "time", "memberCount", "participantCount"]);
+  } else {
+    var lastCol = submissionsSheet.getLastColumn();
+    var headers = submissionsSheet.getRange(1, 1, 1, Math.max(1, lastCol)).getValues()[0];
+    var hasParticipantCount = false;
+    for (var i = 0; i < headers.length; i++) {
+      if (headers[i] === "participantCount") {
+        hasParticipantCount = true;
+        break;
+      }
+    }
+    if (!hasParticipantCount) {
+      // Thêm tiêu đề participantCount vào cột tiếp theo nếu chưa có
+      submissionsSheet.getRange(1, lastCol + 1).setValue("participantCount");
+    }
+  }
+  
+  // 2. Kiểm tra bảng Members
+  if (membersSheet.getLastRow() === 0) {
+    membersSheet.appendRow(["submission_id", "discord_username", "xp", "itlg", "noted"]);
+  }
+}
+
 function doGet(e) {
+  ensureHeaders();
+  
   var action = e.parameter.action || "get_all";
   var id = e.parameter.id;
   
@@ -123,17 +156,11 @@ function doGet(e) {
 }
 
 function doPost(e) {
-  var ss = SpreadsheetApp.getActiveSpreadsheet();
-  var submissionsSheet = ss.getSheetByName("Submissions") || ss.insertSheet("Submissions");
-  var membersSheet = ss.getSheetByName("Members") || ss.insertSheet("Members");
+  ensureHeaders();
   
-  // Tạo tiêu đề nếu bảng mới tinh
-  if (submissionsSheet.getLastRow() === 0) {
-    submissionsSheet.appendRow(["id", "timestamp", "submitter", "region", "title", "time", "memberCount"]);
-  }
-  if (membersSheet.getLastRow() === 0) {
-    membersSheet.appendRow(["submission_id", "discord_username", "xp", "itlg", "noted"]);
-  }
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var submissionsSheet = ss.getSheetByName("Submissions");
+  var membersSheet = ss.getSheetByName("Members");
   
   try {
     var payload = JSON.parse(e.postData.contents);
@@ -146,9 +173,10 @@ function doPost(e) {
       var region = payload.region;
       var title = payload.title;
       var time = payload.time;
+      var participantCount = Number(payload.participantCount) || 0;
       var members = payload.members || [];
       
-      submissionsSheet.appendRow([id, timestamp, submitter, region, title, time, members.length]);
+      submissionsSheet.appendRow([id, timestamp, submitter, region, title, time, members.length, participantCount]);
       
       for (var i = 0; i < members.length; i++) {
         var m = members[i];

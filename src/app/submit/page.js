@@ -11,6 +11,7 @@ export default function SubmitEventForm() {
   const [region, setRegion] = useState(regions[0] || 'Global');
   const [title, setTitle] = useState('');
   const [time, setTime] = useState('');
+  const [participantCount, setParticipantCount] = useState(0);
   const [bulkInput, setBulkInput] = useState('');
   const [bulkXp, setBulkXp] = useState(100);
   const [bulkItlg, setBulkItlg] = useState(0);
@@ -91,6 +92,7 @@ export default function SubmitEventForm() {
     if (!submitter.trim()) return setError('Please enter the submitter name.');
     if (!title.trim()) return setError('Please enter the event title.');
     if (!time.trim()) return setError('Please choose the event date and time.');
+    if (participantCount < 0) return setError('Total participants must be 0 or more.');
 
     for (let i = 0; i < members.length; i++) {
       const m = members[i];
@@ -116,6 +118,7 @@ export default function SubmitEventForm() {
           region,
           title,
           time,
+          participantCount,
           members
         })
       });
@@ -215,6 +218,19 @@ export default function SubmitEventForm() {
                 className="form-input"
                 value={time}
                 onChange={(e) => { setTime(e.target.value); setError(null); }}
+                disabled={submitting}
+              />
+            </div>
+
+            <div className="form-group">
+              <label className="form-label">Total Participants (Attendees)</label>
+              <input
+                type="number"
+                min="0"
+                placeholder="e.g., 50"
+                className="form-input"
+                value={participantCount}
+                onChange={(e) => { setParticipantCount(parseInt(e.target.value) || 0); setError(null); }}
                 disabled={submitting}
               />
             </div>

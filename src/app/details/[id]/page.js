@@ -286,6 +286,13 @@ export default function SubmissionDetails() {
                 </div>
               </div>
 
+              <div>
+                <span style={{ color: 'var(--text-dim)', fontSize: '0.8rem', display: 'block', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Total Participants</span>
+                <strong style={{ fontSize: '1rem', color: 'var(--text-main)', marginTop: '0.25rem', display: 'block' }}>
+                  {submission.participantcount || submission.participantCount || 0} attendees
+                </strong>
+              </div>
+
               <div style={{ borderTop: '1px solid var(--border)', paddingTop: '1rem' }}>
                 <span style={{ color: 'var(--text-dim)', fontSize: '0.8rem', display: 'block', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Submitted At</span>
                 <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginTop: '0.25rem', display: 'block' }}>

@@ -230,7 +230,7 @@ export async function POST(request) {
     
     const id = 'EVT_' + Date.now();
     const timestamp = new Date().toISOString();
-    const { submitter, region, title, time, members } = payload;
+    const { submitter, region, title, time, participantCount, members } = payload;
     
     // Tạo record Submission mới
     const newSubmission = {
@@ -240,7 +240,8 @@ export async function POST(request) {
       region: region || 'Không rõ',
       title: title || 'Sự kiện không tiêu đề',
       time: time || new Date().toISOString().slice(0, 16).replace('T', ' '),
-      memberCount: members ? members.length : 0
+      memberCount: members ? members.length : 0,
+      participantCount: parseInt(participantCount) || 0
     };
     
     db.submissions.unshift(newSubmission); // Thêm vào đầu danh sách
