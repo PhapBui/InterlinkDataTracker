@@ -1,0 +1,96 @@
+{
+  "submissions": [
+    {
+      "id": "EVT_1718613600000",
+      "timestamp": "2026-06-17T08:40:00.000Z",
+      "submitter": "Châu Long",
+      "region": "VN - Vietnam",
+      "title": "Weekly Community Gathering #12",
+      "time": "2026-06-17T19:30",
+      "memberCount": 3
+    },
+    {
+      "id": "EVT_1718527200000",
+      "timestamp": "2026-06-16T08:45:00.000Z",
+      "submitter": "Khánh Đan",
+      "region": "Global",
+      "title": "Guild Esports League Weekly Match",
+      "time": "2026-06-15T20:00",
+      "memberCount": 4
+    },
+    {
+      "id": "EVT_1718354400000",
+      "timestamp": "2026-06-14T11:20:00.000Z",
+      "submitter": "Minh Tuấn",
+      "region": "ID - Indonesia",
+      "title": "Talkshow & AMA: Mod Orientation 2026",
+      "time": "2026-06-13T15:00",
+      "memberCount": 2
+    }
+  ],
+  "members": [
+    {
+      "submission_id": "EVT_1718613600000",
+      "discord_username": "clong_mod",
+      "xp": 150,
+      "itlg": 1,
+      "noted": "Event Organizer, Main Host"
+    },
+    {
+      "submission_id": "EVT_1718613600000",
+      "discord_username": "alex_gaming",
+      "xp": 100,
+      "itlg": 0,
+      "noted": "Audio & Bot setup support"
+    },
+    {
+      "submission_id": "EVT_1718613600000",
+      "discord_username": "yuki_chan",
+      "xp": 80,
+      "itlg": 0,
+      "noted": "Meeting notes & minutes"
+    },
+    {
+      "submission_id": "EVT_1718527200000",
+      "discord_username": "kdan_admin",
+      "xp": 150,
+      "itlg": 1,
+      "noted": "Tournament Host & Live Streamer"
+    },
+    {
+      "submission_id": "EVT_1718527200000",
+      "discord_username": "vinh_phu",
+      "xp": 100,
+      "itlg": 0,
+      "noted": "Match Referee"
+    },
+    {
+      "submission_id": "EVT_1718527200000",
+      "discord_username": "huy_quang",
+      "xp": 100,
+      "itlg": 0,
+      "noted": "Assistant Referee"
+    },
+    {
+      "submission_id": "EVT_1718527200000",
+      "discord_username": "bao_anh",
+      "xp": 80,
+      "itlg": 0,
+      "noted": "Media graphics & promotion"
+    },
+    {
+      "submission_id": "EVT_1718354400000",
+      "discord_username": "mtuan_mod",
+      "xp": 200,
+      "itlg": 1,
+      "noted": "Keynote Speaker & MC"
+    },
+    {
+      "submission_id": "EVT_1718354400000",
+      "discord_username": "clong_mod",
+      "xp": 100,
+      "itlg": 0,
+      "noted": "Guest speaker"
+    }
+  ]
+}
