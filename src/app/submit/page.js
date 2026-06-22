@@ -21,9 +21,13 @@ export default function SubmitEventForm() {
   ]);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState(null);
+  const [duplicateWarning, setDuplicateWarning] = useState(null);
+  const [showDuplicateOverride, setShowDuplicateOverride] = useState(false);
 
   // Add a single empty member row
   const addMemberRow = () => {
+    setDuplicateWarning(null);
+    setShowDuplicateOverride(false);
     setMembers([
       ...members,
       { discord_username: '', xp: 100, itlg: 0, noted: '' }
@@ -36,6 +40,8 @@ export default function SubmitEventForm() {
       setError('An event report must include at least 1 member.');
       return;
     }
+    setDuplicateWarning(null);
+    setShowDuplicateOverride(false);
     const newMembers = [...members];
     newMembers.splice(index, 1);
     setMembers(newMembers);
@@ -43,6 +49,8 @@ export default function SubmitEventForm() {
 
   // Handle member row change
   const handleMemberChange = (index, field, value) => {
+    setDuplicateWarning(null);
+    setShowDuplicateOverride(false);
     const newMembers = [...members];
     newMembers[index][field] = value;
     setMembers(newMembers);
@@ -74,6 +82,8 @@ export default function SubmitEventForm() {
     // Filter out initial empty row if it's untouched
     const cleanedExisting = members.filter(m => m.discord_username.trim() !== '');
     
+    setDuplicateWarning(null);
+    setShowDuplicateOverride(false);
     setMembers([...cleanedExisting, ...newRows]);
     setBulkInput('');
     setBulkNote('');
@@ -107,6 +117,29 @@ export default function SubmitEventForm() {
       }
     }
 
+    // Check for duplicate usernames (case-insensitive)
+    const usernames = members.map(m => m.discord_username.trim().toLowerCase());
+    const duplicates = usernames.filter((name, idx) => name && usernames.indexOf(name) !== idx);
+    const uniqueDuplicates = [...new Set(duplicates)];
+
+    if (uniqueDuplicates.length > 0 && !showDuplicateOverride) {
+      setDuplicateWarning(`Duplicate usernames detected: ${uniqueDuplicates.map(name => `@${name}`).join(', ')}.`);
+      setShowDuplicateOverride(true);
+      return;
+    }
+
+    let finalMembers = members;
+    if (uniqueDuplicates.length > 0 && showDuplicateOverride) {
+      const seen = new Set();
+      finalMembers = members.filter(m => {
+        const name = m.discord_username.trim().toLowerCase();
+        if (!name) return false;
+        if (seen.has(name)) return false;
+        seen.add(name);
+        return true;
+      });
+    }
+
     setSubmitting(true);
 
     try {
@@ -119,7 +152,7 @@ export default function SubmitEventForm() {
           title,
           time,
           participantCount,
-          members
+          members: finalMembers
         })
       });
 
@@ -159,6 +192,21 @@ export default function SubmitEventForm() {
         <div className="card animate-fade-in" style={{ borderColor: 'rgba(239, 68, 68, 0.3)', background: 'rgba(239, 68, 68, 0.05)', padding: '1rem 1.5rem', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
           <AlertTriangle size={20} style={{ color: 'var(--danger)' }} />
           <p style={{ color: '#fca5a5', fontSize: '0.9rem', fontWeight: 500 }}>{error}</p>
+        </div>
+      )}
+
+      {duplicateWarning && (
+        <div className="card animate-fade-in" style={{ borderColor: 'rgba(245, 158, 11, 0.3)', background: 'rgba(245, 158, 11, 0.05)', padding: '1.25rem 1.5rem', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+            <AlertTriangle size={20} style={{ color: 'var(--warning)' }} />
+            <p style={{ color: '#fcd34d', fontSize: '0.95rem', fontWeight: 600, margin: 0 }}>Duplicate Usernames Detected</p>
+          </div>
+          <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', margin: 0 }}>
+            {duplicateWarning}
+          </p>
+          <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem', fontStyle: 'italic', margin: 0 }}>
+            Please review the list to resolve duplicates. If you still want to proceed, click <b>"Submit Anyway"</b> and the duplicate entries will be filtered out automatically.
+          </p>
         </div>
       )}
 
@@ -427,12 +475,17 @@ export default function SubmitEventForm() {
             type="submit"
             className="btn btn-primary"
             disabled={submitting}
-            style={{ minWidth: '160px' }}
+            style={{ minWidth: '160px', backgroundColor: showDuplicateOverride ? 'var(--warning)' : 'var(--primary)', borderColor: showDuplicateOverride ? 'var(--warning)' : 'var(--primary)', color: showDuplicateOverride ? '#000' : '#fff' }}
           >
             {submitting ? (
               <>
                 <div className="animate-spin" style={{ width: '16px', height: '16px', border: '2px solid rgba(255,255,255,0.3)', borderTopColor: 'white', borderRadius: '50%' }}></div>
                 <span>Submitting...</span>
+              </>
+            ) : showDuplicateOverride ? (
+              <>
+                <Send size={18} />
+                <span>Submit Anyway</span>
               </>
             ) : (
               <>
