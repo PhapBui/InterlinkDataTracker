@@ -23,6 +23,8 @@ export default function SubmitEventForm() {
   const [error, setError] = useState(null);
   const [duplicateWarning, setDuplicateWarning] = useState(null);
   const [showDuplicateOverride, setShowDuplicateOverride] = useState(false);
+  const [bulkDuplicateWarning, setBulkDuplicateWarning] = useState(null);
+  const [showBulkOverride, setShowBulkOverride] = useState(false);
 
   // Add a single empty member row
   const addMemberRow = () => {
@@ -81,10 +83,38 @@ export default function SubmitEventForm() {
 
     // Filter out initial empty row if it's untouched
     const cleanedExisting = members.filter(m => m.discord_username.trim() !== '');
+
+    // Check for duplicate usernames (case-insensitive)
+    const lowerUsernames = usernames.map(u => u.toLowerCase());
+    const duplicatesWithin = lowerUsernames.filter((name, idx) => lowerUsernames.indexOf(name) !== idx);
     
+    const existingLower = cleanedExisting.map(m => m.discord_username.trim().toLowerCase()).filter(Boolean);
+    const duplicatesBetween = lowerUsernames.filter(name => existingLower.includes(name));
+    
+    const allDuplicates = [...new Set([...duplicatesWithin, ...duplicatesBetween])];
+
+    if (allDuplicates.length > 0 && !showBulkOverride) {
+      setBulkDuplicateWarning(`Duplicate usernames found in bulk input or existing list: ${allDuplicates.map(u => `@${u}`).join(', ')}.`);
+      setShowBulkOverride(true);
+      return;
+    }
+
+    // Deduplicate on merge
+    const combined = [...cleanedExisting, ...newRows];
+    const seen = new Set();
+    const uniqueCombined = combined.filter(m => {
+      const name = m.discord_username.trim().toLowerCase();
+      if (!name) return false;
+      if (seen.has(name)) return false;
+      seen.add(name);
+      return true;
+    });
+
     setDuplicateWarning(null);
     setShowDuplicateOverride(false);
-    setMembers([...cleanedExisting, ...newRows]);
+    setBulkDuplicateWarning(null);
+    setShowBulkOverride(false);
+    setMembers(uniqueCombined);
     setBulkInput('');
     setBulkNote('');
     setError(null);
@@ -301,9 +331,21 @@ export default function SubmitEventForm() {
               className="form-input"
               style={{ minHeight: '80px', resize: 'vertical', fontFamily: 'monospace', fontSize: '0.9rem' }}
               value={bulkInput}
-              onChange={(e) => setBulkInput(e.target.value)}
+              onChange={(e) => {
+                setBulkInput(e.target.value);
+                setBulkDuplicateWarning(null);
+                setShowBulkOverride(false);
+              }}
               disabled={submitting}
             />
+
+            {bulkDuplicateWarning && (
+              <div className="card animate-fade-in" style={{ borderColor: 'rgba(245, 158, 11, 0.3)', background: 'rgba(245, 158, 11, 0.05)', padding: '0.75rem 1rem', display: 'flex', flexDirection: 'column', gap: '0.25rem', marginTop: '0.5rem' }}>
+                <p style={{ color: '#fcd34d', fontSize: '0.85rem', fontWeight: 600, margin: 0 }}>⚠️ Duplicate Usernames Detected</p>
+                <p style={{ color: 'var(--text-muted)', fontSize: '0.8rem', margin: 0 }}>{bulkDuplicateWarning}</p>
+                <p style={{ color: 'var(--text-muted)', fontSize: '0.75rem', fontStyle: 'italic', margin: 0 }}>Click "Add Anyway" to filter out duplicates automatically.</p>
+              </div>
+            )}
 
             {/* Bulk Columns Configuration */}
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: '1rem' }}>
@@ -347,12 +389,24 @@ export default function SubmitEventForm() {
             
             <button
               type="button"
-              className="btn btn-secondary"
-              style={{ alignSelf: 'flex-end', padding: '0.5rem 1.25rem', fontSize: '0.9rem', marginTop: '0.5rem' }}
+              className={`btn ${showBulkOverride ? '' : 'btn-secondary'}`}
+              style={{ 
+                alignSelf: 'flex-end', 
+                padding: '0.5rem 1.25rem', 
+                fontSize: '0.9rem', 
+                marginTop: '0.5rem',
+                borderRadius: '8px',
+                ...(showBulkOverride ? {
+                  backgroundColor: 'var(--warning)',
+                  borderColor: 'var(--warning)',
+                  color: '#000',
+                  fontWeight: 600
+                } : {})
+              }}
               onClick={handleBulkAdd}
               disabled={submitting}
             >
-              Add Usernames to List
+              {showBulkOverride ? 'Add Anyway' : 'Add Usernames to List'}
             </button>
           </div>
         </div>
