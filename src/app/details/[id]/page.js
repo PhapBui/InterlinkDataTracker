@@ -19,13 +19,19 @@ export default function SubmissionDetails() {
     const fetchDetail = async () => {
       try {
         const res = await fetch(`/api/submissions?id=${id}`);
-        if (!res.ok) throw new Error('Could not fetch event details.');
+        let result;
+        try {
+          result = await res.json();
+        } catch (_) {}
+
+        if (!res.ok) {
+          throw new Error(result?.message || `HTTP Error ${res.status}: Could not fetch event details.`);
+        }
         
-        const result = await res.json();
-        if (result.status === 'success') {
+        if (result && result.status === 'success') {
           setData(result);
         } else {
-          throw new Error(result.message || 'An error occurred.');
+          throw new Error(result?.message || 'An error occurred while loading event details.');
         }
       } catch (err) {
         setError(err.message);

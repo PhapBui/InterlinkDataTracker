@@ -151,7 +151,11 @@ export async function GET(request) {
           headers: { 'Accept': 'application/json' },
           cache: 'no-store'
         });
+        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
         const result = await response.json();
+        if (result.status === 'error') {
+          return NextResponse.json({ status: 'error', message: `Google Sheets API Error: ${result.message}` }, { status: 400 });
+        }
         const normalizedResult = normalizeKeys(result);
         return NextResponse.json({ ...normalizedResult, isMock: false });
       } else if (type === 'dashboard') {
@@ -160,6 +164,11 @@ export async function GET(request) {
           fetch(`${sheetsUrl}?action=get_all`, { cache: 'no-store' }),
           fetch(`${sheetsUrl}?action=get_members`, { cache: 'no-store' })
         ]);
+        
+        if (!subRes.ok || !memRes.ok) {
+          throw new Error(`Failed to fetch dashboard components. Submissions HTTP: ${subRes.status}, Members HTTP: ${memRes.status}`);
+        }
+        
         const subData = await subRes.json();
         const memData = await memRes.json();
         
@@ -169,7 +178,7 @@ export async function GET(request) {
           const stats = calculateDashboard(normSubData, normMemData);
           return NextResponse.json({ status: 'success', data: stats, isMock: false });
         } else {
-          throw new Error('Dữ liệu trả về từ Google Sheets không hợp lệ');
+          throw new Error(subData.message || memData.message || 'Invalid status returned from Google Sheets');
         }
       } else {
         // Lấy toàn bộ sự kiện
@@ -178,13 +187,20 @@ export async function GET(request) {
           headers: { 'Accept': 'application/json' },
           cache: 'no-store'
         });
+        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
         const result = await response.json();
+        if (result.status === 'error') {
+          return NextResponse.json({ status: 'error', message: `Google Sheets API Error: ${result.message}` }, { status: 400 });
+        }
         const normalizedResult = normalizeKeys(result);
         return NextResponse.json({ ...normalizedResult, isMock: false });
       }
     } catch (error) {
-      console.error('Lỗi kết nối tới Google Sheets API, đang chuyển sang dữ liệu Mock:', error);
-      // Nếu Google Sheets lỗi, fallback sang Mock dữ liệu dưới đây
+      console.error('Lỗi kết nối tới Google Sheets API:', error);
+      return NextResponse.json({ 
+        status: 'error', 
+        message: `Google Sheets API Error: ${error.message || 'Connection failed'}. Please verify your Web App URL, Google Sheets configuration, and deployment permissions.` 
+      }, { status: 502 });
     }
   }
   
@@ -221,11 +237,18 @@ export async function POST(request) {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ action: 'submit', ...payload })
         });
+        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
         const result = await response.json();
+        if (result.status === 'error') {
+          return NextResponse.json({ status: 'error', message: `Google Sheets API Error: ${result.message}` }, { status: 400 });
+        }
         return NextResponse.json({ ...result, isMock: false });
       } catch (error) {
-        console.error('Lỗi kết nối Google Sheets khi POST, đang thử ghi cục bộ:', error);
-        // Fallback ghi cục bộ nếu Google Sheets lỗi
+        console.error('Lỗi kết nối Google Sheets khi POST:', error);
+        return NextResponse.json({ 
+          status: 'error', 
+          message: `Google Sheets API Error: Failed to submit report. ${error.message || 'Connection failed'}. Please check your Google Sheets connection and deployment.` 
+        }, { status: 502 });
       }
     }
     

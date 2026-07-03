@@ -22,13 +22,19 @@ export default function DashboardPage() {
     setLoading(true);
     try {
       const res = await fetch('/api/submissions?type=dashboard');
-      if (!res.ok) throw new Error('Could not load dashboard statistics.');
+      let result;
+      try {
+        result = await res.json();
+      } catch (_) {}
+
+      if (!res.ok) {
+        throw new Error(result?.message || `HTTP Error ${res.status}: Could not load dashboard statistics.`);
+      }
       
-      const result = await res.json();
-      if (result.status === 'success') {
+      if (result && result.status === 'success') {
         setData(result.data);
       } else {
-        throw new Error(result.message || 'An error occurred.');
+        throw new Error(result?.message || 'An error occurred while loading dashboard statistics.');
       }
     } catch (err) {
       setError(err.message);

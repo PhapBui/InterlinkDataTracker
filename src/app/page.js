@@ -17,13 +17,20 @@ export default function SubmissionsList() {
     setLoading(true);
     try {
       const res = await fetch('/api/submissions');
-      if (!res.ok) throw new Error('Could not fetch data.');
-      const result = await res.json();
-      if (result.status === 'success') {
+      let result;
+      try {
+        result = await res.json();
+      } catch (_) {}
+
+      if (!res.ok) {
+        throw new Error(result?.message || `HTTP Error ${res.status}: Could not fetch submissions list.`);
+      }
+
+      if (result && result.status === 'success') {
         setSubmissions(result.data || []);
         setIsMock(result.isMock || false);
       } else {
-        throw new Error(result.message || 'An error occurred.');
+        throw new Error(result?.message || 'An error occurred while loading submissions.');
       }
     } catch (err) {
       setError(err.message);
