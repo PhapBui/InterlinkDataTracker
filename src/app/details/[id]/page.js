@@ -12,6 +12,23 @@ export default function SubmissionDetails() {
   const [error, setError] = useState(null);
   const [copied, setCopied] = useState(false);
   const [verified, setVerified] = useState(false);
+  const [toast, setToast] = useState(null);
+
+  // Auto-dismiss toasts
+  useEffect(() => {
+    if (toast) {
+      const timer = setTimeout(() => setToast(null), 4000);
+      return () => clearTimeout(timer);
+    }
+  }, [toast]);
+
+  // Auto-dismiss errors
+  useEffect(() => {
+    if (error) {
+      const timer = setTimeout(() => setError(null), 6000);
+      return () => clearTimeout(timer);
+    }
+  }, [error]);
 
   useEffect(() => {
     if (!id) return;
@@ -117,11 +134,13 @@ export default function SubmissionDetails() {
     
     navigator.clipboard.writeText(text);
     setCopied(true);
+    setToast({ type: 'success', message: 'Discord formatting copied to clipboard!' });
     setTimeout(() => setCopied(false), 2500);
   };
 
   const handleVerify = () => {
     setVerified(true);
+    setToast({ type: 'success', message: 'Event report verified successfully!' });
   };
 
   if (loading) {
@@ -371,6 +390,28 @@ export default function SubmissionDetails() {
           </div>
 
         </div>
+      </div>
+
+      {/* Toast Notifications container */}
+      <div className="toast-container">
+        {error && (
+          <div className="toast toast-error animate-fade-in">
+            <Info size={20} style={{ color: 'var(--danger)', flexShrink: 0, marginTop: '2px' }} />
+            <div>
+              <strong style={{ color: '#fff', fontSize: '0.9rem', display: 'block', marginBottom: '0.15rem' }}>Error</strong>
+              <span style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>{error}</span>
+            </div>
+          </div>
+        )}
+        {toast && (
+          <div className={`toast toast-${toast.type} animate-fade-in`}>
+            <Check size={20} style={{ color: 'var(--success)', flexShrink: 0, marginTop: '2px' }} />
+            <div>
+              <strong style={{ color: '#fff', fontSize: '0.9rem', display: 'block', marginBottom: '0.15rem' }}>Success</strong>
+              <span style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>{toast.message}</span>
+            </div>
+          </div>
+        )}
       </div>
       
     </div>

@@ -1,9 +1,9 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { regions } from '../regions';
 import { useRouter } from 'next/navigation';
-import { Plus, Trash2, ArrowLeft, Send, Sparkles, AlertTriangle, Users, FileText } from 'lucide-react';
+import { Plus, Trash2, ArrowLeft, Send, Sparkles, AlertTriangle, Users, FileText, CheckCircle } from 'lucide-react';
 
 export default function SubmitEventForm() {
   const router = useRouter();
@@ -22,10 +22,27 @@ export default function SubmitEventForm() {
   ]);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState(null);
+  const [toast, setToast] = useState(null);
   const [duplicateWarning, setDuplicateWarning] = useState(null);
   const [showDuplicateOverride, setShowDuplicateOverride] = useState(false);
   const [bulkDuplicateWarning, setBulkDuplicateWarning] = useState(null);
   const [showBulkOverride, setShowBulkOverride] = useState(false);
+
+  // Auto-dismiss toasts
+  useEffect(() => {
+    if (toast) {
+      const timer = setTimeout(() => setToast(null), 4000);
+      return () => clearTimeout(timer);
+    }
+  }, [toast]);
+
+  // Auto-dismiss errors
+  useEffect(() => {
+    if (error) {
+      const timer = setTimeout(() => setError(null), 4000);
+      return () => clearTimeout(timer);
+    }
+  }, [error]);
 
   // Add a single empty member row
   const addMemberRow = () => {
@@ -75,13 +92,6 @@ export default function SubmitEventForm() {
       return;
     }
 
-    const newRows = usernames.map(username => ({
-      discord_username: username,
-      xp: parseInt(bulkXp) || 0,
-      itlg: parseInt(bulkItlg) || 0,
-      noted: bulkNote.trim()
-    }));
-
     // Filter out initial empty row if it's untouched
     const cleanedExisting = members.filter(m => m.discord_username.trim() !== '');
 
@@ -101,6 +111,12 @@ export default function SubmitEventForm() {
     }
 
     // Deduplicate on merge
+    const newRows = usernames.map(username => ({
+      discord_username: username,
+      xp: parseInt(bulkXp) || 0,
+      itlg: parseInt(bulkItlg) || 0,
+      noted: bulkNote.trim()
+    }));
     const combined = [...cleanedExisting, ...newRows];
     const seen = new Set();
     const uniqueCombined = combined.filter(m => {
@@ -119,12 +135,88 @@ export default function SubmitEventForm() {
     setBulkInput('');
     setBulkNote('');
     setError(null);
+    setToast({ type: 'success', message: `Imported ${uniqueCombined.length - cleanedExisting.length} members successfully!` });
+  };
+
+  const handleConfirmBulkAddAnyway = () => {
+    const usernames = bulkInput
+      .split(/[\n,]+/)
+      .map(u => u.trim().replace(/^@/, ''))
+      .filter(Boolean);
+      
+    const newRows = usernames.map(username => ({
+      discord_username: username,
+      xp: parseInt(bulkXp) || 0,
+      itlg: parseInt(bulkItlg) || 0,
+      noted: bulkNote.trim()
+    }));
+
+    const cleanedExisting = members.filter(m => m.discord_username.trim() !== '');
+    const combined = [...cleanedExisting, ...newRows];
+    const seen = new Set();
+    const uniqueCombined = combined.filter(m => {
+      const name = m.discord_username.trim().toLowerCase();
+      if (!name) return false;
+      if (seen.has(name)) return false;
+      seen.add(name);
+      return true;
+    });
+
+    setDuplicateWarning(null);
+    setShowDuplicateOverride(false);
+    setBulkDuplicateWarning(null);
+    setShowBulkOverride(false);
+    setMembers(uniqueCombined);
+    setBulkInput('');
+    setBulkNote('');
+    setError(null);
+    setToast({ type: 'success', message: `Imported ${uniqueCombined.length - cleanedExisting.length} unique members!` });
   };
 
   // Calculate live stats
   const totalXp = members.reduce((sum, m) => sum + (parseInt(m.xp) || 0), 0);
 
   // Submit data
+  const submitData = async (finalMembers) => {
+    setSubmitting(true);
+    try {
+      const res = await fetch('/api/submissions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          submitter,
+          region,
+          title,
+          time,
+          participantCount,
+          proofUrl,
+          members: finalMembers
+        })
+      });
+
+      let result;
+      try {
+        result = await res.json();
+      } catch (_) {}
+
+      if (!res.ok) {
+        throw new Error(result?.message || `HTTP Error ${res.status}: Failed to submit event report.`);
+      }
+
+      if (result && result.status === 'success') {
+        setToast({ type: 'success', message: 'Report submitted successfully!' });
+        setTimeout(() => {
+          router.push(`/details/${result.id}`);
+        }, 1500);
+      } else {
+        throw new Error(result?.message || 'Failed to submit report.');
+      }
+    } catch (err) {
+      setError(err.message);
+      setSubmitting(false);
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError(null);
@@ -163,53 +255,29 @@ export default function SubmitEventForm() {
     const duplicates = usernames.filter((name, idx) => name && usernames.indexOf(name) !== idx);
     const uniqueDuplicates = [...new Set(duplicates)];
 
-    if (uniqueDuplicates.length > 0 && !showDuplicateOverride) {
+    if (uniqueDuplicates.length > 0) {
       setDuplicateWarning(`Duplicate usernames detected: ${uniqueDuplicates.map(name => `@${name}`).join(', ')}.`);
       setShowDuplicateOverride(true);
       return;
     }
 
-    let finalMembers = members;
-    if (uniqueDuplicates.length > 0 && showDuplicateOverride) {
-      const seen = new Set();
-      finalMembers = members.filter(m => {
-        const name = m.discord_username.trim().toLowerCase();
-        if (!name) return false;
-        if (seen.has(name)) return false;
-        seen.add(name);
-        return true;
-      });
-    }
+    submitData(members);
+  };
 
-    setSubmitting(true);
+  const handleConfirmSubmitAnyway = () => {
+    const usernames = members.map(m => m.discord_username.trim().toLowerCase());
+    const seen = new Set();
+    const finalMembers = members.filter(m => {
+      const name = m.discord_username.trim().toLowerCase();
+      if (!name) return false;
+      if (seen.has(name)) return false;
+      seen.add(name);
+      return true;
+    });
 
-    try {
-      const res = await fetch('/api/submissions', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          submitter,
-          region,
-          title,
-          time,
-          participantCount,
-          proofUrl,
-          members: finalMembers
-        })
-      });
-
-      if (!res.ok) throw new Error('Failed to connect to the server.');
-      const result = await res.json();
-
-      if (result.status === 'success') {
-        router.push(`/details/${result.id}`);
-      } else {
-        throw new Error(result.message || 'Failed to submit report.');
-      }
-    } catch (err) {
-      setError(err.message);
-      setSubmitting(false);
-    }
+    setDuplicateWarning(null);
+    setShowDuplicateOverride(false);
+    submitData(finalMembers);
   };
 
   return (
@@ -230,27 +298,7 @@ export default function SubmitEventForm() {
         </div>
       </div>
 
-      {error && (
-        <div className="card animate-fade-in" style={{ borderColor: 'rgba(239, 68, 68, 0.3)', background: 'rgba(239, 68, 68, 0.05)', padding: '1rem 1.5rem', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-          <AlertTriangle size={20} style={{ color: 'var(--danger)' }} />
-          <p style={{ color: '#fca5a5', fontSize: '0.9rem', fontWeight: 500 }}>{error}</p>
-        </div>
-      )}
-
-      {duplicateWarning && (
-        <div className="card animate-fade-in" style={{ borderColor: 'rgba(245, 158, 11, 0.3)', background: 'rgba(245, 158, 11, 0.05)', padding: '1.25rem 1.5rem', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-            <AlertTriangle size={20} style={{ color: 'var(--warning)' }} />
-            <p style={{ color: '#fcd34d', fontSize: '0.95rem', fontWeight: 600, margin: 0 }}>Duplicate Usernames Detected</p>
-          </div>
-          <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', margin: 0 }}>
-            {duplicateWarning}
-          </p>
-          <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem', fontStyle: 'italic', margin: 0 }}>
-            Please review the list to resolve duplicates. If you still want to proceed, click <b>"Submit Anyway"</b> and the duplicate entries will be filtered out automatically.
-          </p>
-        </div>
-      )}
+      {/* Notifications are handled via modern overlay popups and toasts */}
 
       <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
         
@@ -363,13 +411,7 @@ export default function SubmitEventForm() {
               disabled={submitting}
             />
 
-            {bulkDuplicateWarning && (
-              <div className="card animate-fade-in" style={{ borderColor: 'rgba(245, 158, 11, 0.3)', background: 'rgba(245, 158, 11, 0.05)', padding: '0.75rem 1rem', display: 'flex', flexDirection: 'column', gap: '0.25rem', marginTop: '0.5rem' }}>
-                <p style={{ color: '#fcd34d', fontSize: '0.85rem', fontWeight: 600, margin: 0 }}>⚠️ Duplicate Usernames Detected</p>
-                <p style={{ color: 'var(--text-muted)', fontSize: '0.8rem', margin: 0 }}>{bulkDuplicateWarning}</p>
-                <p style={{ color: 'var(--text-muted)', fontSize: '0.75rem', fontStyle: 'italic', margin: 0 }}>Click "Add Anyway" to filter out duplicates automatically.</p>
-              </div>
-            )}
+            {/* Bulk duplicates handled via modal dialog popup */}
 
             {/* Bulk Columns Configuration */}
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: '1rem' }}>
@@ -413,24 +455,18 @@ export default function SubmitEventForm() {
             
             <button
               type="button"
-              className={`btn ${showBulkOverride ? '' : 'btn-secondary'}`}
+              className="btn btn-secondary"
               style={{ 
                 alignSelf: 'flex-end', 
                 padding: '0.5rem 1.25rem', 
                 fontSize: '0.9rem', 
                 marginTop: '0.5rem',
-                borderRadius: '8px',
-                ...(showBulkOverride ? {
-                  backgroundColor: 'var(--warning)',
-                  borderColor: 'var(--warning)',
-                  color: '#000',
-                  fontWeight: 600
-                } : {})
+                borderRadius: '8px'
               }}
               onClick={handleBulkAdd}
               disabled={submitting}
             >
-              {showBulkOverride ? 'Add Anyway' : 'Add Usernames to List'}
+              Add Usernames to List
             </button>
           </div>
         </div>
@@ -553,17 +589,12 @@ export default function SubmitEventForm() {
             type="submit"
             className="btn btn-primary"
             disabled={submitting}
-            style={{ minWidth: '160px', backgroundColor: showDuplicateOverride ? 'var(--warning)' : 'var(--primary)', borderColor: showDuplicateOverride ? 'var(--warning)' : 'var(--primary)', color: showDuplicateOverride ? '#000' : '#fff' }}
+            style={{ minWidth: '160px' }}
           >
             {submitting ? (
               <>
                 <div className="animate-spin" style={{ width: '16px', height: '16px', border: '2px solid rgba(255,255,255,0.3)', borderTopColor: 'white', borderRadius: '50%' }}></div>
                 <span>Submitting...</span>
-              </>
-            ) : showDuplicateOverride ? (
-              <>
-                <Send size={18} />
-                <span>Submit Anyway</span>
               </>
             ) : (
               <>
@@ -575,6 +606,117 @@ export default function SubmitEventForm() {
         </div>
 
       </form>
+
+      {/* Toast Notifications container */}
+      <div className="toast-container">
+        {error && (
+          <div className="toast toast-error animate-fade-in">
+            <AlertTriangle size={20} style={{ color: 'var(--danger)', flexShrink: 0, marginTop: '2px' }} />
+            <div>
+              <strong style={{ color: '#fff', fontSize: '0.9rem', display: 'block', marginBottom: '0.15rem' }}>Error</strong>
+              <span style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>{error}</span>
+            </div>
+          </div>
+        )}
+        {toast && (
+          <div className={`toast toast-${toast.type} animate-fade-in`}>
+            {toast.type === 'success' ? (
+              <CheckCircle size={20} style={{ color: 'var(--success)', flexShrink: 0, marginTop: '2px' }} />
+            ) : (
+              <AlertTriangle size={20} style={{ color: 'var(--warning)', flexShrink: 0, marginTop: '2px' }} />
+            )}
+            <div>
+              <strong style={{ color: '#fff', fontSize: '0.9rem', display: 'block', marginBottom: '0.15rem' }}>
+                {toast.type === 'success' ? 'Success' : 'Warning'}
+              </strong>
+              <span style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>{toast.message}</span>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Modal: Duplicate Submissions Check */}
+      {showDuplicateOverride && duplicateWarning && (
+        <div className="modal-overlay">
+          <div className="modal-content animate-fade-in" style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', borderBottom: '1px solid var(--border)', paddingBottom: '1rem' }}>
+              <AlertTriangle size={24} style={{ color: 'var(--warning)' }} />
+              <h3 style={{ fontSize: '1.25rem', fontWeight: 700, color: '#fff', margin: 0 }}>Duplicate Usernames Detected</h3>
+            </div>
+            
+            <p style={{ color: 'var(--text-main)', fontSize: '0.95rem', lineHeight: 1.5, margin: 0 }}>
+              {duplicateWarning}
+            </p>
+            
+            <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem', lineHeight: 1.5, margin: 0, fontStyle: 'italic' }}>
+              If you submit anyway, the system will automatically filter out the duplicate entries (keeping only the first occurrence of each username) before saving to the database.
+            </p>
+            
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '1rem', marginTop: '0.5rem', borderTop: '1px solid var(--border)', paddingTop: '1rem' }}>
+              <button 
+                type="button" 
+                className="btn btn-secondary" 
+                onClick={() => {
+                  setDuplicateWarning(null);
+                  setShowDuplicateOverride(false);
+                }}
+              >
+                Cancel & Review
+              </button>
+              <button 
+                type="button" 
+                className="btn" 
+                style={{ backgroundColor: 'var(--warning)', color: '#000', fontWeight: 600 }}
+                onClick={handleConfirmSubmitAnyway}
+              >
+                Submit Anyway
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal: Duplicate Bulk Import Check */}
+      {showBulkOverride && bulkDuplicateWarning && (
+        <div className="modal-overlay">
+          <div className="modal-content animate-fade-in" style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', borderBottom: '1px solid var(--border)', paddingBottom: '1rem' }}>
+              <AlertTriangle size={24} style={{ color: 'var(--warning)' }} />
+              <h3 style={{ fontSize: '1.25rem', fontWeight: 700, color: '#fff', margin: 0 }}>Duplicate Usernames in Bulk Input</h3>
+            </div>
+            
+            <p style={{ color: 'var(--text-main)', fontSize: '0.95rem', lineHeight: 1.5, margin: 0 }}>
+              {bulkDuplicateWarning}
+            </p>
+            
+            <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem', lineHeight: 1.5, margin: 0, fontStyle: 'italic' }}>
+              If you proceed anyway, duplicate usernames (within the input or matching existing rows) will be automatically filtered out, and only unique users will be added to the list.
+            </p>
+            
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '1rem', marginTop: '0.5rem', borderTop: '1px solid var(--border)', paddingTop: '1rem' }}>
+              <button 
+                type="button" 
+                className="btn btn-secondary" 
+                onClick={() => {
+                  setBulkDuplicateWarning(null);
+                  setShowBulkOverride(false);
+                }}
+              >
+                Cancel & Edit
+              </button>
+              <button 
+                type="button" 
+                className="btn" 
+                style={{ backgroundColor: 'var(--warning)', color: '#000', fontWeight: 600 }}
+                onClick={handleConfirmBulkAddAnyway}
+              >
+                Add Anyway
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 }
