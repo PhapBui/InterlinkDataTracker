@@ -8,7 +8,8 @@
       "title": "Weekly Community Gathering #12",
       "time": "2026-06-17T19:30",
       "memberCount": 3,
-      "participantCount": 45
+      "participantCount": 45,
+      "proofUrl": "https://docs.google.com/spreadsheets/d/1example123/edit"
     },
     {
       "id": "EVT_1718527200000",
@@ -18,7 +19,8 @@
       "title": "Guild Esports League Weekly Match",
       "time": "2026-06-15T20:00",
       "memberCount": 4,
-      "participantCount": 60
+      "participantCount": 60,
+      "proofUrl": "https://docs.google.com/spreadsheets/d/2example456/edit"
     },
     {
       "id": "EVT_1718354400000",
@@ -28,7 +30,8 @@
       "title": "Talkshow & AMA: Mod Orientation 2026",
       "time": "2026-06-13T15:00",
       "memberCount": 2,
-      "participantCount": 25
+      "participantCount": 25,
+      "proofUrl": ""
     }
   ],
   "members": [

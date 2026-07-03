@@ -81,6 +81,9 @@ export default function SubmissionDetails() {
     text += `**Event:** ${submission.title}\n`;
     text += `**Time:** ${formatEventDate(submission.time)}\n`;
     text += `**Submitter:** ${submission.submitter}\n`;
+    if (submission.proofUrl) {
+      text += `**Evidence:** ${submission.proofUrl}\n`;
+    }
     text += `-------------------------------------------------\n`;
     text += `**PARTICIPANT LIST & XP REWARDS:**\n`;
     
@@ -292,6 +295,30 @@ export default function SubmissionDetails() {
                   {submission.participantcount || submission.participantCount || 0} attendees
                 </strong>
               </div>
+
+              {submission.proofUrl && (
+                <div style={{ borderTop: '1px solid var(--border)', paddingTop: '1rem' }}>
+                  <span style={{ color: 'var(--text-dim)', fontSize: '0.8rem', display: 'block', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Evidence / Proof Link</span>
+                  <a 
+                    href={submission.proofUrl} 
+                    target="_blank" 
+                    rel="noopener noreferrer" 
+                    className="text-gradient-purple"
+                    style={{ 
+                      fontSize: '0.9rem', 
+                      fontWeight: 600, 
+                      marginTop: '0.25rem', 
+                      display: 'inline-flex', 
+                      alignItems: 'center', 
+                      gap: '0.25rem',
+                      textDecoration: 'underline'
+                    }}
+                  >
+                    <span>View Google Sheet Proof</span>
+                    <span style={{ fontSize: '0.8rem' }}>🔗</span>
+                  </a>
+                </div>
+              )}
 
               <div style={{ borderTop: '1px solid var(--border)', paddingTop: '1rem' }}>
                 <span style={{ color: 'var(--text-dim)', fontSize: '0.8rem', display: 'block', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Submitted At</span>

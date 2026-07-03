@@ -24,10 +24,12 @@ function ensureHeaders() {
   
   // 1. Kiểm tra bảng Submissions
   if (submissionsSheet.getLastRow() === 0) {
-    submissionsSheet.appendRow(["id", "timestamp", "submitter", "region", "title", "time", "memberCount", "participantCount"]);
+    submissionsSheet.appendRow(["id", "timestamp", "submitter", "region", "title", "time", "memberCount", "participantCount", "proofUrl"]);
   } else {
     var lastCol = submissionsSheet.getLastColumn();
     var headers = submissionsSheet.getRange(1, 1, 1, Math.max(1, lastCol)).getValues()[0];
+    
+    // Kiểm tra participantCount
     var hasParticipantCount = false;
     for (var i = 0; i < headers.length; i++) {
       if (headers[i] === "participantCount") {
@@ -36,8 +38,20 @@ function ensureHeaders() {
       }
     }
     if (!hasParticipantCount) {
-      // Thêm tiêu đề participantCount vào cột tiếp theo nếu chưa có
       submissionsSheet.getRange(1, lastCol + 1).setValue("participantCount");
+      lastCol = submissionsSheet.getLastColumn(); // Cập nhật lại số cột cuối
+    }
+    
+    // Kiểm tra proofUrl
+    var hasProofUrl = false;
+    for (var i = 0; i < headers.length; i++) {
+      if (headers[i] === "proofUrl") {
+        hasProofUrl = true;
+        break;
+      }
+    }
+    if (!hasProofUrl) {
+      submissionsSheet.getRange(1, lastCol + 1).setValue("proofUrl");
     }
   }
   
@@ -174,9 +188,10 @@ function doPost(e) {
       var title = payload.title;
       var time = payload.time;
       var participantCount = Number(payload.participantCount) || 0;
+      var proofUrl = payload.proofUrl || "";
       var members = payload.members || [];
       
-      submissionsSheet.appendRow([id, timestamp, submitter, region, title, time, members.length, participantCount]);
+      submissionsSheet.appendRow([id, timestamp, submitter, region, title, time, members.length, participantCount, proofUrl]);
       
       for (var i = 0; i < members.length; i++) {
         var m = members[i];

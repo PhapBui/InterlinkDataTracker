@@ -12,6 +12,7 @@ export default function SubmitEventForm() {
   const [title, setTitle] = useState('');
   const [time, setTime] = useState('');
   const [participantCount, setParticipantCount] = useState(0);
+  const [proofUrl, setProofUrl] = useState('');
   const [bulkInput, setBulkInput] = useState('');
   const [bulkXp, setBulkXp] = useState(100);
   const [bulkItlg, setBulkItlg] = useState(0);
@@ -133,6 +134,13 @@ export default function SubmitEventForm() {
     if (!title.trim()) return setError('Please enter the event title.');
     if (!time.trim()) return setError('Please choose the event date and time.');
     if (participantCount < 0) return setError('Total participants must be 0 or more.');
+    if (proofUrl.trim() !== '') {
+      try {
+        new URL(proofUrl.trim());
+      } catch (_) {
+        return setError('Please enter a valid URL for the Google Sheet proof link (including http:// or https://).');
+      }
+    }
 
     for (let i = 0; i < members.length; i++) {
       const m = members[i];
@@ -182,6 +190,7 @@ export default function SubmitEventForm() {
           title,
           time,
           participantCount,
+          proofUrl,
           members: finalMembers
         })
       });
@@ -309,6 +318,18 @@ export default function SubmitEventForm() {
                 className="form-input"
                 value={participantCount}
                 onChange={(e) => { setParticipantCount(parseInt(e.target.value) || 0); setError(null); }}
+                disabled={submitting}
+              />
+            </div>
+
+            <div className="form-group" style={{ gridColumn: 'span 2' }}>
+              <label className="form-label">Proof Google Sheet Link</label>
+              <input
+                type="url"
+                placeholder="https://docs.google.com/spreadsheets/d/..."
+                className="form-input"
+                value={proofUrl}
+                onChange={(e) => { setProofUrl(e.target.value); setError(null); }}
                 disabled={submitting}
               />
             </div>

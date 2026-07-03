@@ -25,6 +25,10 @@ function normalizeKeys(obj) {
         mappedKey = 'discord_username';
       } else if (normalizedKey === 'membercount') {
         mappedKey = 'memberCount';
+      } else if (normalizedKey === 'participantcount') {
+        mappedKey = 'participantCount';
+      } else if (normalizedKey === 'proofurl' || normalizedKey === 'prooflink' || normalizedKey === 'evidence') {
+        mappedKey = 'proofUrl';
       } else if (normalizedKey === 'notes') {
         mappedKey = 'noted';
       }
@@ -230,7 +234,7 @@ export async function POST(request) {
     
     const id = 'EVT_' + Date.now();
     const timestamp = new Date().toISOString();
-    const { submitter, region, title, time, participantCount, members } = payload;
+    const { submitter, region, title, time, participantCount, proofUrl, members } = payload;
     
     // Tạo record Submission mới
     const newSubmission = {
@@ -241,7 +245,8 @@ export async function POST(request) {
       title: title || 'Sự kiện không tiêu đề',
       time: time || new Date().toISOString().slice(0, 16).replace('T', ' '),
       memberCount: members ? members.length : 0,
-      participantCount: parseInt(participantCount) || 0
+      participantCount: parseInt(participantCount) || 0,
+      proofUrl: proofUrl || ''
     };
     
     db.submissions.unshift(newSubmission); // Thêm vào đầu danh sách
