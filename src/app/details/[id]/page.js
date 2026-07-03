@@ -71,6 +71,21 @@ export default function SubmissionDetails() {
     }
   };
 
+  const getDirectImageUrl = (urlStr) => {
+    if (!urlStr) return null;
+    try {
+      const url = new URL(urlStr.trim());
+      if (url.hostname.includes('snipboard.io')) {
+        let path = url.pathname;
+        if (!path.endsWith('.jpg') && !path.endsWith('.png')) {
+          path = path + '.jpg';
+        }
+        return `${url.protocol}//${url.hostname}${path}`;
+      }
+    } catch (_) {}
+    return null;
+  };
+
   // Copy formatting for Discord posts
   const handleCopyDiscordFormat = () => {
     if (!data) return;
@@ -298,24 +313,25 @@ export default function SubmissionDetails() {
 
               {submission.proofUrl && (
                 <div style={{ borderTop: '1px solid var(--border)', paddingTop: '1rem' }}>
-                  <span style={{ color: 'var(--text-dim)', fontSize: '0.8rem', display: 'block', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Evidence / Proof Link</span>
+                  <span style={{ color: 'var(--text-dim)', fontSize: '0.8rem', display: 'block', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '0.5rem' }}>Screenshot Proof</span>
                   <a 
                     href={submission.proofUrl} 
                     target="_blank" 
                     rel="noopener noreferrer" 
-                    className="text-gradient-purple"
-                    style={{ 
-                      fontSize: '0.9rem', 
-                      fontWeight: 600, 
-                      marginTop: '0.25rem', 
-                      display: 'inline-flex', 
-                      alignItems: 'center', 
-                      gap: '0.25rem',
-                      textDecoration: 'underline'
-                    }}
+                    style={{ display: 'block', borderRadius: '8px', overflow: 'hidden', border: '1px solid var(--border)', position: 'relative' }}
                   >
-                    <span>View Google Sheet Proof</span>
-                    <span style={{ fontSize: '0.8rem' }}>🔗</span>
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img 
+                      src={getDirectImageUrl(submission.proofUrl) || submission.proofUrl} 
+                      alt="Event Screenshot Proof" 
+                      style={{ width: '100%', height: 'auto', display: 'block', maxHeight: '180px', objectFit: 'cover' }}
+                      onError={(e) => {
+                        e.target.style.display = 'none';
+                      }}
+                    />
+                    <div style={{ padding: '0.5rem', background: 'rgba(0,0,0,0.6)', fontSize: '0.75rem', textAlign: 'center', color: 'var(--text-main)', borderTop: '1px solid var(--border)' }}>
+                      Click to view full screenshot 🔗
+                    </div>
                   </a>
                 </div>
               )}

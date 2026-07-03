@@ -136,9 +136,12 @@ export default function SubmitEventForm() {
     if (participantCount < 0) return setError('Total participants must be 0 or more.');
     if (proofUrl.trim() !== '') {
       try {
-        new URL(proofUrl.trim());
+        const url = new URL(proofUrl.trim());
+        if (!url.hostname.includes('snipboard.io')) {
+          return setError('Please enter a valid snipboard.io screenshot link (e.g., https://snipboard.io/xxxxxx).');
+        }
       } catch (_) {
-        return setError('Please enter a valid URL for the Google Sheet proof link (including http:// or https://).');
+        return setError('Please enter a valid URL for the screenshot proof link (including http:// or https://).');
       }
     }
 
@@ -323,10 +326,10 @@ export default function SubmitEventForm() {
             </div>
 
             <div className="form-group" style={{ gridColumn: 'span 2' }}>
-              <label className="form-label">Proof Google Sheet Link</label>
+              <label className="form-label">Screenshot Proof Link (snipboard.io)</label>
               <input
                 type="url"
-                placeholder="https://docs.google.com/spreadsheets/d/..."
+                placeholder="https://snipboard.io/xxxxxx"
                 className="form-input"
                 value={proofUrl}
                 onChange={(e) => { setProofUrl(e.target.value); setError(null); }}
