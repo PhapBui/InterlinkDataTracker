@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { regions as configRegions } from '../regions';
 import Link from 'next/link';
-import { Search, Filter, Calendar, MapPin, User, ChevronRight, FileSpreadsheet, Plus, AlertCircle, RefreshCw } from 'lucide-react';
+import { Search, Filter, Calendar, MapPin, User, ChevronRight, FileSpreadsheet, Plus, AlertCircle, RefreshCw, CheckCircle } from 'lucide-react';
 
 export default function SubmissionsList() {
   const [submissions, setSubmissions] = useState([]);
@@ -11,6 +11,7 @@ export default function SubmissionsList() {
   const [error, setError] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedRegion, setSelectedRegion] = useState('');
+  const [selectedStatus, setSelectedStatus] = useState('');
   const [isMock, setIsMock] = useState(false);
 
   const fetchData = async () => {
@@ -46,15 +47,21 @@ export default function SubmissionsList() {
   const handleSearchChange = (e) => setSearchTerm(e.target.value);
   const handleRegionChange = (e) => setSelectedRegion(e.target.value);
 
-  // Filter submissions by search term and region
+  // Filter submissions by search term, region, and paid status
   const filteredSubmissions = submissions.filter((sub) => {
     const matchesSearch = 
       (sub.submitter || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
       (sub.title || '').toLowerCase().includes(searchTerm.toLowerCase());
     
-    // Map region filter to raw values in DB (just in case they are different)
     const matchesRegion = selectedRegion === '' || sub.region === selectedRegion;
-    return matchesSearch && matchesRegion;
+    
+    const isPaid = sub.paid === true || String(sub.paid).toLowerCase() === 'true';
+    const matchesStatus = 
+      selectedStatus === '' || 
+      (selectedStatus === 'paid' && isPaid) || 
+      (selectedStatus === 'pending' && !isPaid);
+      
+    return matchesSearch && matchesRegion && matchesStatus;
   });
 
   // Get unique regions list for filter
@@ -175,6 +182,21 @@ export default function SubmissionsList() {
               ))}
             </select>
           </div>
+
+          <div style={{ minWidth: '160px', display: 'flex', alignItems: 'center', gap: '0.5rem', background: 'var(--bg-input)', border: '1px solid var(--border)', borderRadius: '12px', padding: '0 0.75rem' }}>
+            <Filter size={16} style={{ color: 'var(--text-dim)' }} />
+            <select
+              className="form-input"
+              style={{ border: 'none', background: 'transparent', padding: '0.75rem 0.25rem', width: '100%' }}
+              value={selectedStatus}
+              onChange={(e) => setSelectedStatus(e.target.value)}
+            >
+              <option value="" style={{ background: 'var(--bg-main)' }}>All Statuses</option>
+              <option value="paid" style={{ background: 'var(--bg-main)' }}>Paid</option>
+              <option value="pending" style={{ background: 'var(--bg-main)' }}>Pending</option>
+            </select>
+          </div>
+
           <button onClick={fetchData} className="btn btn-secondary" style={{ padding: '0.75rem' }} title="Reload Data">
             <RefreshCw size={18} className={loading ? 'animate-spin' : ''} />
           </button>
@@ -201,8 +223,8 @@ export default function SubmissionsList() {
           <p style={{ color: 'var(--text-muted)', marginBottom: '1.5rem' }}>
             {searchTerm || selectedRegion ? 'No events match your search criteria.' : 'No event reports have been submitted for this week yet.'}
           </p>
-          {(searchTerm || selectedRegion) ? (
-            <button onClick={() => { setSearchTerm(''); setSelectedRegion(''); }} className="btn btn-secondary">Clear Filters</button>
+          {(searchTerm || selectedRegion || selectedStatus) ? (
+            <button onClick={() => { setSearchTerm(''); setSelectedRegion(''); setSelectedStatus(''); }} className="btn btn-secondary">Clear Filters</button>
           ) : (
             <Link href="/submit" className="btn btn-primary">
               <Plus size={18} />
@@ -220,6 +242,7 @@ export default function SubmissionsList() {
                 <th>Region</th>
                 <th>Event Title</th>
                 <th>Mods Count</th>
+                <th>Reward Status</th>
                 <th style={{ textAlign: 'right' }}>Action</th>
               </tr>
             </thead>
@@ -259,9 +282,21 @@ export default function SubmissionsList() {
                       {sub.participantcount || sub.participantCount || 0} attendees
                     </span>
                   </td>
+                  <td>
+                    {sub.paid === true || String(sub.paid).toLowerCase() === 'true' ? (
+                      <span className="badge badge-success">
+                        <CheckCircle size={10} style={{ marginRight: '4px' }} />
+                        Paid
+                      </span>
+                    ) : (
+                      <span className="badge" style={{ backgroundColor: 'rgba(255,255,255,0.05)', color: 'var(--text-muted)', border: '1px solid var(--border)' }}>
+                        Pending
+                      </span>
+                    )}
+                  </td>
                   <td style={{ textAlign: 'right' }}>
                     <Link href={`/details/${sub.id}`} className="btn btn-secondary" style={{ padding: '0.4rem 0.8rem', fontSize: '0.85rem', borderRadius: '8px' }}>
-                      <span>Verify</span>
+                      <span>Review</span>
                       <ChevronRight size={14} />
                     </Link>
                   </td>

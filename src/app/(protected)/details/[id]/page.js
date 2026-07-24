@@ -61,6 +61,7 @@ export default function SubmissionDetails() {
         
         if (result && result.status === 'success') {
           setData(result);
+          setVerified(result.submission.paid === true || String(result.submission.paid).toLowerCase() === 'true');
         } else {
           throw new Error(result?.message || 'An error occurred while loading event details.');
         }
@@ -152,9 +153,38 @@ export default function SubmissionDetails() {
     setTimeout(() => setCopied(false), 2500);
   };
 
-  const handleVerify = () => {
-    setVerified(true);
-    setToast({ type: 'success', message: 'Event report verified successfully!' });
+  const handleVerify = async () => {
+    try {
+      const res = await fetch(`/api/submissions`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id, paid: true })
+      });
+      let result;
+      try { result = await res.json(); } catch (_) {}
+      
+      if (!res.ok) {
+        throw new Error(result?.message || 'Failed to update payment status.');
+      }
+      
+      if (result && result.status === 'success') {
+        setVerified(true);
+        if (data) {
+          setData({
+            ...data,
+            submission: {
+              ...data.submission,
+              paid: true
+            }
+          });
+        }
+        setToast({ type: 'success', message: 'Rewards marked as paid successfully!' });
+      } else {
+        throw new Error(result?.message || 'Failed to update payment status.');
+      }
+    } catch (err) {
+      setToast({ type: 'error', message: err.message });
+    }
   };
 
   if (loading) {
@@ -225,7 +255,7 @@ export default function SubmissionDetails() {
               style={verified ? { color: 'var(--success)', borderColor: 'rgba(16, 185, 129, 0.3)', background: 'rgba(16, 185, 129, 0.05)' } : {}}
             >
               <CheckCircle size={18} />
-              <span>{verified ? 'Verified Correct' : 'Confirm Correct'}</span>
+              <span>{verified ? 'Paid' : 'Mark as Paid'}</span>
             </button>
           )}
         </div>
@@ -350,6 +380,17 @@ export default function SubmissionDetails() {
                 <strong style={{ fontSize: '1rem', color: 'var(--text-main)', marginTop: '0.25rem', display: 'block' }}>
                   {submission.participantcount || submission.participantCount || 0} attendees
                 </strong>
+              </div>
+
+              <div style={{ borderTop: '1px solid var(--border)', paddingTop: '1rem' }}>
+                <span style={{ color: 'var(--text-dim)', fontSize: '0.8rem', display: 'block', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Reward Status</span>
+                <span style={{ marginTop: '0.25rem', display: 'block' }}>
+                  {verified ? (
+                    <span className="badge badge-success">Paid</span>
+                  ) : (
+                    <span className="badge" style={{ backgroundColor: 'rgba(255,255,255,0.05)', color: 'var(--text-muted)', border: '1px solid var(--border)' }}>Pending</span>
+                  )}
+                </span>
               </div>
 
               {submission.proofUrl && (

@@ -269,7 +269,8 @@ export async function POST(request) {
       time: time || new Date().toISOString().slice(0, 16).replace('T', ' '),
       memberCount: members ? members.length : 0,
       participantCount: parseInt(participantCount) || 0,
-      proofUrl: proofUrl || ''
+      proofUrl: proofUrl || '',
+      paid: false
     };
     
     db.submissions.unshift(newSubmission); // Thêm vào đầu danh sách
@@ -300,6 +301,57 @@ export async function POST(request) {
       });
     }
     
+  } catch (error) {
+    return NextResponse.json({ status: 'error', message: error.toString() }, { status: 500 });
+  }
+}
+
+export async function PUT(request) {
+  const sheetsUrl = process.env.NEXT_PUBLIC_SHEETS_API_URL;
+  const isMock = !sheetsUrl || sheetsUrl.trim() === '';
+  
+  try {
+    const payload = await request.json();
+    const { id, paid } = payload;
+    
+    if (!id) {
+      return NextResponse.json({ status: 'error', message: 'Missing submission ID' }, { status: 400 });
+    }
+    
+    // 1. GOOGLE SHEETS MODE
+    if (!isMock) {
+      try {
+        const response = await fetch(sheetsUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'update_paid', id, paid })
+        });
+        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+        const result = await response.json();
+        if (result.status === 'error') {
+          return NextResponse.json({ status: 'error', message: `Google Sheets API Error: ${result.message}` }, { status: 400 });
+        }
+        return NextResponse.json(result);
+      } catch (error) {
+        console.error('Lỗi khi cập nhật trạng thái trả thưởng trên Google Sheets:', error);
+        return NextResponse.json({ 
+          status: 'error', 
+          message: `Google Sheets API Error: Failed to update payment status. ${error.message || 'Connection failed'}.` 
+        }, { status: 502 });
+      }
+    }
+    
+    // 2. MOCK DATA MODE
+    const db = await readMockDb();
+    const submission = db.submissions.find(s => String(s.id) === String(id));
+    if (!submission) {
+      return NextResponse.json({ status: 'error', message: 'Không tìm thấy sự kiện' }, { status: 404 });
+    }
+    
+    submission.paid = paid;
+    await writeMockDb(db);
+    
+    return NextResponse.json({ status: 'success', id, paid });
   } catch (error) {
     return NextResponse.json({ status: 'error', message: error.toString() }, { status: 500 });
   }

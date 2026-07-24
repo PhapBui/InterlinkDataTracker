@@ -52,6 +52,19 @@ function ensureHeaders() {
     }
     if (!hasProofUrl) {
       submissionsSheet.getRange(1, lastCol + 1).setValue("proofUrl");
+      lastCol = submissionsSheet.getLastColumn();
+    }
+    
+    // Kiểm tra paid
+    var hasPaid = false;
+    for (var i = 0; i < headers.length; i++) {
+      if (headers[i] === "paid") {
+        hasPaid = true;
+        break;
+      }
+    }
+    if (!hasPaid) {
+      submissionsSheet.getRange(1, lastCol + 1).setValue("paid");
     }
   }
   
@@ -191,7 +204,7 @@ function doPost(e) {
       var proofUrl = payload.proofUrl || "";
       var members = payload.members || [];
       
-      submissionsSheet.appendRow([id, timestamp, submitter, region, title, time, members.length, participantCount, proofUrl]);
+      submissionsSheet.appendRow([id, timestamp, submitter, region, title, time, members.length, participantCount, proofUrl, "FALSE"]);
       
       for (var i = 0; i < members.length; i++) {
         var m = members[i];
@@ -205,6 +218,22 @@ function doPost(e) {
       }
       
       return ContentService.createTextOutput(JSON.stringify({ status: "success", id: id }))
+        .setMimeType(ContentService.MimeType.JSON);
+    }
+    
+    if (action === "update_paid") {
+      var id = payload.id;
+      var paid = payload.paid;
+      
+      var rows = submissionsSheet.getDataRange().getValues();
+      for (var i = 1; i < rows.length; i++) {
+        if (String(rows[i][0]) === String(id)) {
+          submissionsSheet.getRange(i + 1, 10).setValue(paid ? "TRUE" : "FALSE");
+          return ContentService.createTextOutput(JSON.stringify({ status: "success", id: id, paid: paid }))
+            .setMimeType(ContentService.MimeType.JSON);
+        }
+      }
+      return ContentService.createTextOutput(JSON.stringify({ status: "error", message: "Event not found" }))
         .setMimeType(ContentService.MimeType.JSON);
     }
   } catch (err) {
