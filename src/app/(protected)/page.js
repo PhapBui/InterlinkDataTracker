@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { regions as configRegions } from './regions';
+import { regions as configRegions } from '../regions';
 import Link from 'next/link';
 import { Search, Filter, Calendar, MapPin, User, ChevronRight, FileSpreadsheet, Plus, AlertCircle, RefreshCw } from 'lucide-react';
 

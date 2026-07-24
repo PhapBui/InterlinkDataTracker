@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { regions } from '../regions';
+import { regions } from '../../regions';
 import { useRouter } from 'next/navigation';
 import { Plus, Trash2, ArrowLeft, Send, Sparkles, AlertTriangle, Users, FileText, CheckCircle } from 'lucide-react';
 

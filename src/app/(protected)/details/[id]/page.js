@@ -13,6 +13,7 @@ export default function SubmissionDetails() {
   const [copied, setCopied] = useState(false);
   const [verified, setVerified] = useState(false);
   const [toast, setToast] = useState(null);
+  const [currentUser, setCurrentUser] = useState(null);
 
   // Auto-dismiss toasts
   useEffect(() => {
@@ -32,6 +33,19 @@ export default function SubmissionDetails() {
 
   useEffect(() => {
     if (!id) return;
+
+    const checkUserSession = async () => {
+      try {
+        const res = await fetch('/api/auth/session');
+        const data = await res.json();
+        if (data.loggedIn) {
+          setCurrentUser(data.user);
+        }
+      } catch (err) {
+        console.error('Failed to check user session on details page:', err);
+      }
+    };
+    checkUserSession();
     
     const fetchDetail = async () => {
       try {
@@ -203,15 +217,17 @@ export default function SubmissionDetails() {
             <span>{copied ? 'Copied Discord Format!' : 'Copy Discord Format'}</span>
           </button>
           
-          <button 
-            onClick={handleVerify} 
-            className={`btn ${verified ? 'btn-secondary' : 'btn-primary'}`}
-            disabled={verified}
-            style={verified ? { color: 'var(--success)', borderColor: 'rgba(16, 185, 129, 0.3)', background: 'rgba(16, 185, 129, 0.05)' } : {}}
-          >
-            <CheckCircle size={18} />
-            <span>{verified ? 'Verified Correct' : 'Confirm Correct'}</span>
-          </button>
+          {currentUser?.role === 'admin' && (
+            <button 
+              onClick={handleVerify} 
+              className={`btn ${verified ? 'btn-secondary' : 'btn-primary'}`}
+              disabled={verified}
+              style={verified ? { color: 'var(--success)', borderColor: 'rgba(16, 185, 129, 0.3)', background: 'rgba(16, 185, 129, 0.05)' } : {}}
+            >
+              <CheckCircle size={18} />
+              <span>{verified ? 'Verified Correct' : 'Confirm Correct'}</span>
+            </button>
+          )}
         </div>
       </div>
 
