@@ -34,7 +34,7 @@ export default function SubmissionsList() {
         throw new Error(result?.message || 'An error occurred while loading submissions.');
       }
     } catch (err) {
-      setError(err.message);
+      setError(`Lỗi ở phần API Google Sheet: ${err.message}`);
     } finally {
       setLoading(false);
     }
