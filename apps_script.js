@@ -107,8 +107,12 @@ function doGet(e) {
       data.push(item);
     }
     
-    // Đảo ngược để sự kiện mới nhất hiển thị đầu tiên
-    data.reverse(); 
+    data.reverse(); // Đảo ngược để sự kiện mới nhất hiển thị đầu tiên
+    
+    var limit = Number(e.parameter.limit) || 0;
+    if (limit > 0 && limit < data.length) {
+      data = data.slice(0, limit);
+    }
     
     return ContentService.createTextOutput(JSON.stringify({ status: "success", data: data }))
       .setMimeType(ContentService.MimeType.JSON);
@@ -206,15 +210,20 @@ function doPost(e) {
       
       submissionsSheet.appendRow([id, timestamp, submitter, region, title, time, members.length, participantCount, proofUrl, "FALSE"]);
       
-      for (var i = 0; i < members.length; i++) {
-        var m = members[i];
-        membersSheet.appendRow([
-          id, 
-          m.discord_username, 
-          m.xp, 
-          Number(m.itlg) || 0, 
-          m.noted || ""
-        ]);
+      if (members && members.length > 0) {
+        var memberRows = [];
+        for (var i = 0; i < members.length; i++) {
+          var m = members[i];
+          memberRows.push([
+            id, 
+            m.discord_username, 
+            m.xp, 
+            Number(m.itlg) || 0, 
+            m.noted || ""
+          ]);
+        }
+        var nextRow = membersSheet.getLastRow() + 1;
+        membersSheet.getRange(nextRow, 1, memberRows.length, 5).setValues(memberRows);
       }
       
       return ContentService.createTextOutput(JSON.stringify({ status: "success", id: id }))
