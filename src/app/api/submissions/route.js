@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import fs from 'fs/promises';
 import path from 'path';
 import { regions } from '../../regions';
+import { getSession } from '../../auth/session';
 
 // Đường dẫn tới file mock_db.json
 const getMockDbPath = () => path.join(process.cwd(), 'mock_db.json');
@@ -31,6 +32,8 @@ function normalizeKeys(obj) {
         mappedKey = 'proofUrl';
       } else if (normalizedKey === 'notes') {
         mappedKey = 'noted';
+      } else if (normalizedKey === 'submitteremail' || normalizedKey === 'email') {
+        mappedKey = 'submitterEmail';
       }
       
       normalized[mappedKey] = normalizeKeys(obj[key]);
@@ -229,13 +232,16 @@ export async function POST(request) {
   try {
     const payload = await request.json();
     
+    const session = getSession();
+    const submitterEmail = session ? session.email : 'unknown@gmail.com';
+    
     // 1. CHẾ ĐỘ GOOGLE SHEETS
     if (!isMock) {
       try {
         const response = await fetch(sheetsUrl, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ action: 'submit', ...payload })
+          body: JSON.stringify({ action: 'submit', submitterEmail, ...payload })
         });
         if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
         const result = await response.json();
@@ -264,6 +270,7 @@ export async function POST(request) {
       id,
       timestamp,
       submitter: submitter || 'Ẩn danh',
+      submitterEmail,
       region: region || 'Không rõ',
       title: title || 'Sự kiện không tiêu đề',
       time: time || new Date().toISOString().slice(0, 16).replace('T', ' '),

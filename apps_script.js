@@ -65,6 +65,19 @@ function ensureHeaders() {
     }
     if (!hasPaid) {
       submissionsSheet.getRange(1, lastCol + 1).setValue("paid");
+      lastCol = submissionsSheet.getLastColumn();
+    }
+    
+    // Kiểm tra submitterEmail
+    var hasSubmitterEmail = false;
+    for (var i = 0; i < headers.length; i++) {
+      if (headers[i] === "submitterEmail") {
+        hasSubmitterEmail = true;
+        break;
+      }
+    }
+    if (!hasSubmitterEmail) {
+      submissionsSheet.getRange(1, lastCol + 1).setValue("submitterEmail");
     }
   }
   
@@ -207,8 +220,9 @@ function doPost(e) {
       var participantCount = Number(payload.participantCount) || 0;
       var proofUrl = payload.proofUrl || "";
       var members = payload.members || [];
+      var submitterEmail = payload.submitterEmail || "";
       
-      submissionsSheet.appendRow([id, timestamp, submitter, region, title, time, members.length, participantCount, proofUrl, "FALSE"]);
+      submissionsSheet.appendRow([id, timestamp, submitter, region, title, time, members.length, participantCount, proofUrl, "FALSE", submitterEmail]);
       
       if (members && members.length > 0) {
         var memberRows = [];
