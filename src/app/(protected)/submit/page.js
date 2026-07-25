@@ -31,18 +31,10 @@ export default function SubmitEventForm() {
   // Auto-dismiss toasts
   useEffect(() => {
     if (toast) {
-      const timer = setTimeout(() => setToast(null), 4000);
+      const timer = setTimeout(() => setToast(null), 5000);
       return () => clearTimeout(timer);
     }
   }, [toast]);
-
-  // Auto-dismiss errors
-  useEffect(() => {
-    if (error) {
-      const timer = setTimeout(() => setError(null), 4000);
-      return () => clearTimeout(timer);
-    }
-  }, [error]);
 
   // Add a single empty member row
   const addMemberRow = () => {
@@ -221,8 +213,29 @@ export default function SubmitEventForm() {
     setTimeout(() => {
       const element = document.getElementById(id);
       if (element) {
-        element.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        element.focus();
+        // Custom gradual acceleration/deceleration smooth scroll
+        const targetPosition = element.getBoundingClientRect().top + window.pageYOffset - (window.innerHeight / 2);
+        const startPosition = window.pageYOffset;
+        const distance = targetPosition - startPosition;
+        const duration = 900; // 900ms duration
+        let start = null;
+
+        const step = (timestamp) => {
+          if (!start) start = timestamp;
+          const progress = timestamp - start;
+          // Cubic ease-in-out easing function
+          const easeInOutCubic = (t) => t < 0.5 ? 4 * t * t * t : (t - 1) * (2 * t - 2) * (2 * t - 2) + 1;
+          const ease = easeInOutCubic(Math.min(progress / duration, 1));
+          
+          window.scrollTo(0, startPosition + distance * ease);
+          
+          if (progress < duration) {
+            window.requestAnimationFrame(step);
+          } else {
+            element.focus();
+          }
+        };
+        window.requestAnimationFrame(step);
       }
     }, 100);
   };
@@ -655,27 +668,69 @@ export default function SubmitEventForm() {
       {/* Toast Notifications container */}
       <div className="toast-container">
         {error && (
-          <div className="toast toast-error animate-fade-in">
-            <AlertTriangle size={20} style={{ color: 'var(--danger)', flexShrink: 0, marginTop: '2px' }} />
-            <div>
-              <strong style={{ color: '#fff', fontSize: '0.9rem', display: 'block', marginBottom: '0.15rem' }}>Error</strong>
-              <span style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>{error}</span>
+          <div className="toast toast-error animate-fade-in" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', width: '100%', gap: '1rem' }}>
+            <div style={{ display: 'flex', gap: '0.75rem' }}>
+              <AlertTriangle size={20} style={{ color: 'var(--danger)', flexShrink: 0, marginTop: '2px' }} />
+              <div>
+                <strong style={{ color: '#fff', fontSize: '0.9rem', display: 'block', marginBottom: '0.15rem' }}>Error</strong>
+                <span style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>{error}</span>
+              </div>
             </div>
+            <button 
+              type="button" 
+              onClick={() => setError(null)} 
+              style={{ 
+                background: 'transparent', 
+                border: 'none', 
+                color: 'var(--text-dim)', 
+                cursor: 'pointer', 
+                fontSize: '1.2rem',
+                padding: '0 0.25rem',
+                lineHeight: 1,
+                transition: 'color 0.2s',
+                marginTop: '-2px'
+              }}
+              onMouseOver={(e) => e.target.style.color = '#fff'}
+              onMouseOut={(e) => e.target.style.color = 'var(--text-dim)'}
+            >
+              &times;
+            </button>
           </div>
         )}
         {toast && (
-          <div className={`toast toast-${toast.type} animate-fade-in`}>
-            {toast.type === 'success' ? (
-              <CheckCircle size={20} style={{ color: 'var(--success)', flexShrink: 0, marginTop: '2px' }} />
-            ) : (
-              <AlertTriangle size={20} style={{ color: 'var(--warning)', flexShrink: 0, marginTop: '2px' }} />
-            )}
-            <div>
-              <strong style={{ color: '#fff', fontSize: '0.9rem', display: 'block', marginBottom: '0.15rem' }}>
-                {toast.type === 'success' ? 'Success' : 'Warning'}
-              </strong>
-              <span style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>{toast.message}</span>
+          <div className={`toast toast-${toast.type} animate-fade-in`} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', width: '100%', gap: '1rem' }}>
+            <div style={{ display: 'flex', gap: '0.75rem' }}>
+              {toast.type === 'success' ? (
+                <CheckCircle size={20} style={{ color: 'var(--success)', flexShrink: 0, marginTop: '2px' }} />
+              ) : (
+                <AlertTriangle size={20} style={{ color: 'var(--warning)', flexShrink: 0, marginTop: '2px' }} />
+              )}
+              <div>
+                <strong style={{ color: '#fff', fontSize: '0.9rem', display: 'block', marginBottom: '0.15rem' }}>
+                  {toast.type === 'success' ? 'Success' : 'Warning'}
+                </strong>
+                <span style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>{toast.message}</span>
+              </div>
             </div>
+            <button 
+              type="button" 
+              onClick={() => setToast(null)} 
+              style={{ 
+                background: 'transparent', 
+                border: 'none', 
+                color: 'var(--text-dim)', 
+                cursor: 'pointer', 
+                fontSize: '1.2rem',
+                padding: '0 0.25rem',
+                lineHeight: 1,
+                transition: 'color 0.2s',
+                marginTop: '-2px'
+              }}
+              onMouseOver={(e) => e.target.style.color = '#fff'}
+              onMouseOut={(e) => e.target.style.color = 'var(--text-dim)'}
+            >
+              &times;
+            </button>
           </div>
         )}
       </div>
