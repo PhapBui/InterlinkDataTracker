@@ -330,7 +330,8 @@ export default function SubmitEventForm() {
   };
 
   return (
-    <div className="animate-fade-in" style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+    <>
+      <div className="animate-fade-in" style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
       
       {/* Back button and header */}
       <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
@@ -664,8 +665,9 @@ export default function SubmitEventForm() {
         </div>
 
       </form>
+    </div>
 
-      {/* Toast Notifications container */}
+    {/* Toast Notifications container */}
       <div className="toast-container">
         {error && (
           <div className="toast toast-error animate-fade-in" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', width: '100%', gap: '1rem' }}>
@@ -817,6 +819,6 @@ export default function SubmitEventForm() {
         </div>
       )}
 
-    </div>
+    </>
   );
 }

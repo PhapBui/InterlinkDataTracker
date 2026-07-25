@@ -18,18 +18,10 @@ export default function SubmissionDetails() {
   // Auto-dismiss toasts
   useEffect(() => {
     if (toast) {
-      const timer = setTimeout(() => setToast(null), 4000);
+      const timer = setTimeout(() => setToast(null), 5000);
       return () => clearTimeout(timer);
     }
   }, [toast]);
-
-  // Auto-dismiss errors
-  useEffect(() => {
-    if (error) {
-      const timer = setTimeout(() => setError(null), 6000);
-      return () => clearTimeout(timer);
-    }
-  }, [error]);
 
   useEffect(() => {
     if (!id) return;
@@ -221,7 +213,8 @@ export default function SubmissionDetails() {
   const totalItlg = members.reduce((sum, m) => sum + (parseInt(m.itlg) || 0), 0);
 
   return (
-    <div className="animate-fade-in" style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
+    <>
+      <div className="animate-fade-in" style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
       
       {/* Header controls */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
@@ -448,29 +441,72 @@ export default function SubmissionDetails() {
 
         </div>
       </div>
+    </div>
 
-      {/* Toast Notifications container */}
+    {/* Toast Notifications container */}
       <div className="toast-container">
         {error && (
-          <div className="toast toast-error animate-fade-in">
-            <Info size={20} style={{ color: 'var(--danger)', flexShrink: 0, marginTop: '2px' }} />
-            <div>
-              <strong style={{ color: '#fff', fontSize: '0.9rem', display: 'block', marginBottom: '0.15rem' }}>Error</strong>
-              <span style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>{error}</span>
+          <div className="toast toast-error animate-fade-in" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', width: '100%', gap: '1rem' }}>
+            <div style={{ display: 'flex', gap: '0.75rem' }}>
+              <Info size={20} style={{ color: 'var(--danger)', flexShrink: 0, marginTop: '2px' }} />
+              <div>
+                <strong style={{ color: '#fff', fontSize: '0.9rem', display: 'block', marginBottom: '0.15rem' }}>Error</strong>
+                <span style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>{error}</span>
+              </div>
             </div>
+            <button 
+              type="button" 
+              onClick={() => setError(null)} 
+              style={{ 
+                background: 'transparent', 
+                border: 'none', 
+                color: 'var(--text-dim)', 
+                cursor: 'pointer', 
+                fontSize: '1.2rem',
+                padding: '0 0.25rem',
+                lineHeight: 1,
+                transition: 'color 0.2s',
+                marginTop: '-2px'
+              }}
+              onMouseOver={(e) => e.target.style.color = '#fff'}
+              onMouseOut={(e) => e.target.style.color = 'var(--text-dim)'}
+            >
+              &times;
+            </button>
           </div>
         )}
         {toast && (
-          <div className={`toast toast-${toast.type} animate-fade-in`}>
-            <Check size={20} style={{ color: 'var(--success)', flexShrink: 0, marginTop: '2px' }} />
-            <div>
-              <strong style={{ color: '#fff', fontSize: '0.9rem', display: 'block', marginBottom: '0.15rem' }}>Success</strong>
-              <span style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>{toast.message}</span>
+          <div className={`toast toast-${toast.type} animate-fade-in`} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', width: '100%', gap: '1rem' }}>
+            <div style={{ display: 'flex', gap: '0.75rem' }}>
+              <Check size={20} style={{ color: 'var(--success)', flexShrink: 0, marginTop: '2px' }} />
+              <div>
+                <strong style={{ color: '#fff', fontSize: '0.9rem', display: 'block', marginBottom: '0.15rem' }}>Success</strong>
+                <span style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>{toast.message}</span>
+              </div>
             </div>
+            <button 
+              type="button" 
+              onClick={() => setToast(null)} 
+              style={{ 
+                background: 'transparent', 
+                border: 'none', 
+                color: 'var(--text-dim)', 
+                cursor: 'pointer', 
+                fontSize: '1.2rem',
+                padding: '0 0.25rem',
+                lineHeight: 1,
+                transition: 'color 0.2s',
+                marginTop: '-2px'
+              }}
+              onMouseOver={(e) => e.target.style.color = '#fff'}
+              onMouseOut={(e) => e.target.style.color = 'var(--text-dim)'}
+            >
+              &times;
+            </button>
           </div>
         )}
       </div>
       
-    </div>
+    </>
   );
 }
