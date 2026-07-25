@@ -429,11 +429,11 @@ a {
 /* Popups and Toasts */
 .toast-container {
   position: fixed;
-  top: 1.5rem;
-  right: 1.5rem;
+  bottom: 2rem;
+  right: 2rem;
   z-index: 9999;
   display: flex;
-  flex-direction: column;
+  flex-direction: column-reverse;
   gap: 0.75rem;
   max-width: 380px;
   width: calc(100% - 3rem);
@@ -513,4 +513,18 @@ a {
   to {
     transform: translateY(0);
   }
+}
+
+/* Calendar Picker Icon Styling in Dark Mode */
+input[type="date"]::-webkit-calendar-picker-indicator {
+  filter: invert(0.85) sepia(1) saturate(5) hue-rotate(200deg); /* glowing purple primary color */
+  cursor: pointer;
+  transform: scale(1.15);
+  transition: transform 0.2s, filter 0.2s;
+  padding: 2px;
+}
+
+input[type="date"]::-webkit-calendar-picker-indicator:hover {
+  transform: scale(1.25);
+  filter: invert(1) sepia(1) saturate(5) hue-rotate(210deg);
 }

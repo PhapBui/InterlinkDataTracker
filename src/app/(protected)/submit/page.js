@@ -217,36 +217,72 @@ export default function SubmitEventForm() {
     }
   };
 
+  const scrollToElement = (id) => {
+    setTimeout(() => {
+      const element = document.getElementById(id);
+      if (element) {
+        element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        element.focus();
+      }
+    }, 100);
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError(null);
 
     // Validation
-    if (!submitter.trim()) return setError('Please enter the submitter name.');
-    if (!title.trim()) return setError('Please enter the event title.');
-    if (!time.trim()) return setError('Please choose the event date and time.');
-    if (participantCount < 0) return setError('Total participants must be 0 or more.');
+    if (!submitter.trim()) {
+      setError('Please enter the submitter name.');
+      scrollToElement('submitter-name');
+      return;
+    }
+    if (!title.trim()) {
+      setError('Please enter the event title.');
+      scrollToElement('event-title');
+      return;
+    }
+    if (!time.trim()) {
+      setError('Please choose the event date.');
+      scrollToElement('event-date');
+      return;
+    }
+    if (participantCount < 0) {
+      setError('Total participants must be 0 or more.');
+      scrollToElement('participant-count');
+      return;
+    }
     if (proofUrl.trim() !== '') {
       try {
         const url = new URL(proofUrl.trim());
         if (!url.hostname.includes('snipboard.io')) {
-          return setError('Please enter a valid snipboard.io screenshot link (e.g., https://snipboard.io/xxxxxx).');
+          setError('Please enter a valid snipboard.io screenshot link (e.g., https://snipboard.io/xxxxxx).');
+          scrollToElement('proof-url');
+          return;
         }
       } catch (_) {
-        return setError('Please enter a valid URL for the screenshot proof link (including http:// or https://).');
+        setError('Please enter a valid URL for the screenshot proof link (including http:// or https://).');
+        scrollToElement('proof-url');
+        return;
       }
     }
 
     for (let i = 0; i < members.length; i++) {
       const m = members[i];
       if (!m.discord_username.trim()) {
-        return setError(`Row ${i + 1}: Please enter the Discord Username.`);
+        setError(`Row ${i + 1}: Please enter the Discord Username.`);
+        scrollToElement(`discord-username-${i}`);
+        return;
       }
       if (m.xp === '' || isNaN(m.xp) || parseInt(m.xp) < 0) {
-        return setError(`Row ${i + 1}: XP must be a number greater than or equal to 0.`);
+        setError(`Row ${i + 1}: XP must be a number greater than or equal to 0.`);
+        scrollToElement(`xp-${i}`);
+        return;
       }
       if (m.itlg === '' || isNaN(m.itlg) || parseInt(m.itlg) < 0) {
-        return setError(`Row ${i + 1}: ITLG must be a valid number (quantity).`);
+        setError(`Row ${i + 1}: ITLG must be a valid number (quantity).`);
+        scrollToElement(`itlg-${i}`);
+        return;
       }
     }
 
@@ -312,8 +348,9 @@ export default function SubmitEventForm() {
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '1.5rem' }}>
             
             <div className="form-group">
-              <label className="form-label">Submitter Name</label>
+              <label className="form-label">Submitter Name <span style={{ color: 'var(--danger)', marginLeft: '2px' }}>*</span></label>
               <input
+                id="submitter-name"
                 type="text"
                 placeholder="e.g., Châu Long"
                 className="form-input"
@@ -338,8 +375,9 @@ export default function SubmitEventForm() {
             </div>
 
             <div className="form-group">
-              <label className="form-label">Event Title</label>
+              <label className="form-label">Event Title <span style={{ color: 'var(--danger)', marginLeft: '2px' }}>*</span></label>
               <input
+                id="event-title"
                 type="text"
                 placeholder="e.g., Gaming Night #3"
                 className="form-input"
@@ -350,9 +388,10 @@ export default function SubmitEventForm() {
             </div>
 
             <div className="form-group">
-              <label className="form-label">Event Date & Time</label>
+              <label className="form-label">Event Date <span style={{ color: 'var(--danger)', marginLeft: '2px' }}>*</span></label>
               <input
-                type="datetime-local"
+                id="event-date"
+                type="date"
                 className="form-input"
                 value={time}
                 onChange={(e) => { setTime(e.target.value); setError(null); }}
@@ -363,6 +402,7 @@ export default function SubmitEventForm() {
             <div className="form-group">
               <label className="form-label">Total Participants (Attendees)</label>
               <input
+                id="participant-count"
                 type="number"
                 min="0"
                 placeholder="e.g., 50"
@@ -376,6 +416,7 @@ export default function SubmitEventForm() {
             <div className="form-group" style={{ gridColumn: 'span 2' }}>
               <label className="form-label">Screenshot Proof Link (snipboard.io)</label>
               <input
+                id="proof-url"
                 type="url"
                 placeholder="https://snipboard.io/xxxxxx"
                 className="form-input"
@@ -490,8 +531,8 @@ export default function SubmitEventForm() {
             <table className="custom-table" style={{ border: '1px solid var(--border)', borderRadius: '12px' }}>
               <thead>
                 <tr>
-                  <th style={{ width: '40%' }}>Discord Username</th>
-                  <th style={{ width: '15%' }}>XP</th>
+                  <th style={{ width: '40%' }}>Discord Username <span style={{ color: 'var(--danger)' }}>*</span></th>
+                  <th style={{ width: '15%' }}>XP <span style={{ color: 'var(--danger)' }}>*</span></th>
                   <th style={{ width: '15%' }}>ITLG (Qty)</th>
                   <th style={{ width: '25%' }}>Notes (Noted)</th>
                   <th style={{ width: '5%', textAlign: 'center' }}>Delete</th>
@@ -502,6 +543,7 @@ export default function SubmitEventForm() {
                   <tr key={index}>
                     <td>
                       <input
+                        id={`discord-username-${index}`}
                         type="text"
                         placeholder="clong_mod"
                         className="form-input"
@@ -513,6 +555,7 @@ export default function SubmitEventForm() {
                     </td>
                     <td>
                       <input
+                        id={`xp-${index}`}
                         type="number"
                         placeholder="100"
                         min="0"
@@ -525,6 +568,7 @@ export default function SubmitEventForm() {
                     </td>
                     <td>
                       <input
+                        id={`itlg-${index}`}
                         type="number"
                         placeholder="0"
                         min="0"
@@ -537,6 +581,7 @@ export default function SubmitEventForm() {
                     </td>
                     <td>
                       <input
+                        id={`noted-${index}`}
                         type="text"
                         placeholder="e.g., Main Host"
                         className="form-input"

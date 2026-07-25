@@ -1,15 +1,15 @@
 export const allowlist = [
-  'bvphap.tk@gmail.com', // Admin mặc định
-  'admin@gmail.com',
-  'mod1@gmail.com',
-  'mod2@gmail.com',
-  'user1@gmail.com'
+  // 'bvphap.tk@gmail.com', // Admin mặc định
+  // 'admin@gmail.com',
+  // 'mod1@gmail.com',
+  // 'mod2@gmail.com',
+  // 'user1@gmail.com'
 ];
 
 export function isAllowed(email) {
   if (!email) return false;
   const cleanedEmail = email.trim().toLowerCase();
-  
+
   // Kiểm tra biến môi trường
   const envAllowed = process.env.ALLOWED_EMAILS;
   if (envAllowed) {
