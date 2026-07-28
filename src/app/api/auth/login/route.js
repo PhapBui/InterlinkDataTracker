@@ -6,8 +6,7 @@ export async function GET() {
   const redirect_uri = `${app_url}/api/auth/callback`;
 
   if (!client_id || client_id.trim() === '') {
-    // If not configured, redirect to mock login URL
-    return NextResponse.json({ url: `${app_url}/login?mock=true` });
+    return NextResponse.json({ error: 'MissingConfig' }, { status: 400 });
   }
 
   const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?` +
