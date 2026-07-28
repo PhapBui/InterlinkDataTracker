@@ -8,20 +8,21 @@ export async function GET(request) {
   const errorParam = searchParams.get('error');
 
   const app_url = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+  const cleanAppUrl = app_url.endsWith('/') ? app_url.slice(0, -1) : app_url;
 
   if (errorParam) {
     console.error('Google OAuth redirect error:', errorParam);
-    return NextResponse.redirect(`${app_url}/login?error=${encodeURIComponent(errorParam)}`);
+    return NextResponse.redirect(`${cleanAppUrl}/login?error=${encodeURIComponent(errorParam)}`);
   }
 
   if (!code) {
-    return NextResponse.redirect(`${app_url}/login?error=MissingCode`);
+    return NextResponse.redirect(`${cleanAppUrl}/login?error=MissingCode`);
   }
 
   try {
     const client_id = process.env.GOOGLE_CLIENT_ID;
     const client_secret = process.env.GOOGLE_CLIENT_SECRET;
-    const redirect_uri = `${app_url}/api/auth/callback`;
+    const redirect_uri = `${cleanAppUrl}/api/auth/callback`;
 
     // 1. Exchange authorization code for token
     const tokenResponse = await fetch('https://oauth2.googleapis.com/token', {
