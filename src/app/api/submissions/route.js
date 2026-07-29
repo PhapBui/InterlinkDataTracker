@@ -71,29 +71,42 @@ function calculateDashboard(submissions, members) {
   const submissionsCount = submissions.length;
   const totalXp = members.reduce((sum, m) => sum + (parseInt(m.xp) || 0), 0);
   
-  // Tính toán bảng xếp hạng (Leaderboard)
-  const memberMap = new Map();
+  // Tính toán bảng xếp hạng (Leaderboard) theo Người gửi báo cáo (Submitter / Moderator)
+  const subStatsMap = new Map();
   members.forEach(m => {
-    const username = m.discord_username;
+    const subId = m.submission_id;
     const xp = parseInt(m.xp) || 0;
-    const itlgQty = parseInt(m.itlg) || 0;
+    const itlg = parseInt(m.itlg) || 0;
     
-    if (!memberMap.has(username)) {
-      memberMap.set(username, {
-        username,
+    if (!subStatsMap.has(subId)) {
+      subStatsMap.set(subId, { xp: 0, itlg: 0 });
+    }
+    const stats = subStatsMap.get(subId);
+    stats.xp += xp;
+    stats.itlg += itlg;
+  });
+
+  const moderatorMap = new Map();
+  submissions.forEach(sub => {
+    const moderator = sub.submitter || 'Anonymous';
+    const subStats = subStatsMap.get(sub.id) || { xp: 0, itlg: 0 };
+    
+    if (!moderatorMap.has(moderator)) {
+      moderatorMap.set(moderator, {
+        username: moderator,
         xp: 0,
         eventsCount: 0,
         leaderCount: 0
       });
     }
-    const current = memberMap.get(username);
-    current.xp += xp;
+    const current = moderatorMap.get(moderator);
+    current.xp += subStats.xp;
     current.eventsCount += 1;
-    current.leaderCount += itlgQty;
+    current.leaderCount += subStats.itlg;
   });
-  
-  const leaderboard = Array.from(memberMap.values())
-    .sort((a, b) => b.xp - a.xp); // Sắp xếp giảm dần theo XP
+
+  const leaderboard = Array.from(moderatorMap.values())
+    .sort((a, b) => b.xp - a.xp); // Sắp xếp giảm dần theo tổng XP phân phối
   
   const activeModsCount = leaderboard.length;
   
@@ -105,7 +118,7 @@ function calculateDashboard(submissions, members) {
   });
   
   submissions.forEach(sub => {
-    const region = sub.region || 'Khác';
+    const region = sub.region || 'Unknown';
     if (!regionMap.has(region)) {
       regionMap.set(region, { region, eventsCount: 0, totalXp: 0 });
     }
@@ -116,7 +129,7 @@ function calculateDashboard(submissions, members) {
   const submissionRegionMap = new Map(submissions.map(s => [s.id, s.region]));
   members.forEach(m => {
     const subId = m.submission_id;
-    const region = submissionRegionMap.get(subId) || 'Khác';
+    const region = submissionRegionMap.get(subId) || 'Unknown';
     const xp = parseInt(m.xp) || 0;
     
     if (!regionMap.has(region)) {

@@ -272,7 +272,7 @@ export default function DashboardPage() {
               This leaderboard updates in real-time as event submissions are logged. 
             </p>
             <p style={{ marginTop: '0.5rem' }}>
-              The system sums the XP of all events each moderator participated in. Trophies and medals (👑, 🥈, 🥉) honor the top 3 high-performing mods. ITLG credits are accumulated based on quantitative leadership scores entered during submission.
+              The system sums the XP distributed in all events each moderator submitted. Trophies and medals (👑, 🥈, 🥉) honor the top 3 high-performing moderators. ITLG credits are accumulated based on quantitative leadership scores distributed in their events.
             </p>
           </div>
 

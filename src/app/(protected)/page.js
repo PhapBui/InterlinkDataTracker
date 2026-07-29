@@ -241,7 +241,7 @@ export default function SubmissionsList() {
                 <th>Submitter</th>
                 <th>Region</th>
                 <th>Event Title</th>
-                <th>Mods Count</th>
+                <th>Awardees Count</th>
                 <th>Reward Status</th>
                 <th style={{ textAlign: 'right' }}>Action</th>
               </tr>
@@ -277,7 +277,7 @@ export default function SubmissionsList() {
                     </span>
                   </td>
                   <td>
-                    <span style={{ fontWeight: 500, display: 'block' }}>{sub.memberCount || 0} mods</span>
+                    <span style={{ fontWeight: 500, display: 'block' }}>{sub.memberCount || 0} awardees</span>
                     <span style={{ display: 'block', fontSize: '0.8rem', color: 'var(--text-dim)', marginTop: '2px' }}>
                       {sub.participantcount || sub.participantCount || 0} attendees
                     </span>
