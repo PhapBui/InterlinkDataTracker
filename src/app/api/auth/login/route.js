@@ -1,9 +1,9 @@
 import { NextResponse } from 'next/server';
 
-export async function GET() {
+export async function GET(request) {
   const client_id = process.env.GOOGLE_CLIENT_ID;
-  const app_url = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
-  const cleanAppUrl = app_url.endsWith('/') ? app_url.slice(0, -1) : app_url;
+  const { origin } = new URL(request.url);
+  const cleanAppUrl = origin.endsWith('/') ? origin.slice(0, -1) : origin;
   const redirect_uri = `${cleanAppUrl}/api/auth/callback`.replace(/([^:]\/)\/+/g, '$1');
 
   if (!client_id || client_id.trim() === '') {

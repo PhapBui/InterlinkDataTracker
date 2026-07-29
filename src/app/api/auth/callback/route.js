@@ -7,8 +7,8 @@ export async function GET(request) {
   const code = searchParams.get('code');
   const errorParam = searchParams.get('error');
 
-  const app_url = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
-  const cleanAppUrl = app_url.endsWith('/') ? app_url.slice(0, -1) : app_url;
+  const { origin } = new URL(request.url);
+  const cleanAppUrl = origin.endsWith('/') ? origin.slice(0, -1) : origin;
 
   if (errorParam) {
     console.error('Google OAuth redirect error:', errorParam);
