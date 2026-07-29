@@ -40,7 +40,7 @@ export async function GET(request) {
     if (!tokenResponse.ok) {
       const errText = await tokenResponse.text();
       console.error('Failed to exchange token:', errText);
-      return NextResponse.redirect(`${app_url}/login?error=TokenExchangeFailed`);
+      return NextResponse.redirect(`${cleanAppUrl}/login?error=TokenExchangeFailed`);
     }
 
     const { access_token } = await tokenResponse.json();
@@ -52,19 +52,19 @@ export async function GET(request) {
 
     if (!userinfoResponse.ok) {
       console.error('Failed to fetch userinfo');
-      return NextResponse.redirect(`${app_url}/login?error=FetchUserInfoFailed`);
+      return NextResponse.redirect(`${cleanAppUrl}/login?error=FetchUserInfoFailed`);
     }
 
     const userProfile = await userinfoResponse.json();
     const { email, name, picture, email_verified } = userProfile;
 
     if (!email || !email_verified) {
-      return NextResponse.redirect(`${app_url}/login?error=EmailNotVerified`);
+      return NextResponse.redirect(`${cleanAppUrl}/login?error=EmailNotVerified`);
     }
 
     // 3. Check against allowlist
     if (!isAllowed(email)) {
-      return NextResponse.redirect(`${app_url}/login?error=Unauthorized&email=${encodeURIComponent(email)}`);
+      return NextResponse.redirect(`${cleanAppUrl}/login?error=Unauthorized&email=${encodeURIComponent(email)}`);
     }
 
     // 4. Create session and set cookie
@@ -77,9 +77,9 @@ export async function GET(request) {
     });
 
     // 5. Redirect back to application home
-    return NextResponse.redirect(`${app_url}/`);
+    return NextResponse.redirect(`${cleanAppUrl}/`);
   } catch (error) {
     console.error('Authentication callback error:', error);
-    return NextResponse.redirect(`${app_url}/login?error=InternalError`);
+    return NextResponse.redirect(`${cleanAppUrl}/login?error=InternalError`);
   }
 }
