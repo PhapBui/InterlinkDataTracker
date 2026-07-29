@@ -249,7 +249,10 @@ a {
 }
 
 .custom-table th {
-  background: rgba(25, 35, 58, 0.6);
+  position: sticky;
+  top: 0;
+  background: #161e2e;
+  z-index: 10;
   padding: 1rem 1.25rem;
   font-weight: 600;
   color: var(--text-muted);

@@ -541,8 +541,16 @@ export default function SubmitEventForm() {
             </div>
           </div>
 
-          <div className="table-container" style={{ marginTop: '0', background: 'transparent', border: 'none' }}>
-            <table className="custom-table" style={{ border: '1px solid var(--border)', borderRadius: '12px' }}>
+          <div className="table-container" style={{ 
+            marginTop: '0', 
+            background: 'rgba(15, 22, 38, 0.4)', 
+            border: '1px solid var(--border)', 
+            borderRadius: '12px',
+            maxHeight: '380px', 
+            overflowY: 'auto',
+            position: 'relative'
+          }}>
+            <table className="custom-table" style={{ border: 'none', borderCollapse: 'separate', borderSpacing: 0 }}>
               <thead>
                 <tr>
                   <th style={{ width: '40%' }}>Discord Username <span style={{ color: 'var(--danger)' }}>*</span></th>
@@ -635,7 +643,20 @@ export default function SubmitEventForm() {
         </div>
 
         {/* Submit Actions */}
-        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '1rem' }}>
+        <div style={{ 
+          position: 'sticky', 
+          bottom: 0, 
+          background: 'rgba(11, 15, 25, 0.85)', 
+          backdropFilter: 'blur(12px)',
+          WebkitBackdropFilter: 'blur(12px)',
+          borderTop: '1px solid var(--border)',
+          padding: '1.25rem 0',
+          marginTop: '1.5rem',
+          display: 'flex', 
+          justifyContent: 'flex-end', 
+          gap: '1rem',
+          zIndex: 100
+        }}>
           <button
             type="button"
             className="btn btn-secondary"
