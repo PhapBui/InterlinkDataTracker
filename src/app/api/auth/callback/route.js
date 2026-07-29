@@ -22,7 +22,7 @@ export async function GET(request) {
   try {
     const client_id = process.env.GOOGLE_CLIENT_ID;
     const client_secret = process.env.GOOGLE_CLIENT_SECRET;
-    const redirect_uri = `${cleanAppUrl}/api/auth/callback`;
+    const redirect_uri = `${cleanAppUrl}/api/auth/callback`.replace(/([^:]\/)\/+/g, '$1');
 
     // 1. Exchange authorization code for token
     const tokenResponse = await fetch('https://oauth2.googleapis.com/token', {
