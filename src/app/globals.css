@@ -498,6 +498,8 @@ a {
   padding: 2rem;
   max-width: 520px;
   width: calc(100% - 2rem);
+  max-height: 90vh;
+  overflow-y: auto;
   box-shadow: var(--shadow-lg), 0 0 30px -5px var(--primary-glow);
   transform: translateY(-20px);
   animation: slideDownModal 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;

@@ -746,9 +746,19 @@ export default function SubmitEventForm() {
               <h3 style={{ fontSize: '1.25rem', fontWeight: 700, color: '#fff', margin: 0 }}>Duplicate Usernames Detected</h3>
             </div>
             
-            <p style={{ color: 'var(--text-main)', fontSize: '0.95rem', lineHeight: 1.5, margin: 0 }}>
-              {duplicateWarning}
-            </p>
+            <div style={{ 
+              maxHeight: '160px', 
+              overflowY: 'auto', 
+              background: 'rgba(0, 0, 0, 0.25)', 
+              padding: '0.75rem 1rem', 
+              borderRadius: '8px', 
+              border: '1px solid var(--border)',
+              margin: '0.25rem 0'
+            }}>
+              <p style={{ color: 'var(--text-main)', fontSize: '0.95rem', lineHeight: 1.5, margin: 0 }}>
+                {duplicateWarning}
+              </p>
+            </div>
             
             <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem', lineHeight: 1.5, margin: 0, fontStyle: 'italic' }}>
               If you submit anyway, the system will automatically filter out the duplicate entries (keeping only the first occurrence of each username) before saving to the database.
@@ -787,9 +797,19 @@ export default function SubmitEventForm() {
               <h3 style={{ fontSize: '1.25rem', fontWeight: 700, color: '#fff', margin: 0 }}>Duplicate Usernames in Bulk Input</h3>
             </div>
             
-            <p style={{ color: 'var(--text-main)', fontSize: '0.95rem', lineHeight: 1.5, margin: 0 }}>
-              {bulkDuplicateWarning}
-            </p>
+            <div style={{ 
+              maxHeight: '160px', 
+              overflowY: 'auto', 
+              background: 'rgba(0, 0, 0, 0.25)', 
+              padding: '0.75rem 1rem', 
+              borderRadius: '8px', 
+              border: '1px solid var(--border)',
+              margin: '0.25rem 0'
+            }}>
+              <p style={{ color: 'var(--text-main)', fontSize: '0.95rem', lineHeight: 1.5, margin: 0 }}>
+                {bulkDuplicateWarning}
+              </p>
+            </div>
             
             <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem', lineHeight: 1.5, margin: 0, fontStyle: 'italic' }}>
               If you proceed anyway, duplicate usernames (within the input or matching existing rows) will be automatically filtered out, and only unique users will be added to the list.
