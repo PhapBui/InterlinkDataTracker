@@ -1,8 +1,9 @@
 import { NextResponse } from 'next/server';
 import { clearSessionCookie } from '../../../auth/session';
 
-export async function GET() {
-  const app_url = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+export async function GET(request) {
+  const { origin } = new URL(request.url);
+  const cleanAppUrl = origin.endsWith('/') ? origin.slice(0, -1) : origin;
   clearSessionCookie();
-  return NextResponse.redirect(`${app_url}/login`);
+  return NextResponse.redirect(`${cleanAppUrl}/login`);
 }
