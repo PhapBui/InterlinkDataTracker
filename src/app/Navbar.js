@@ -98,7 +98,7 @@ export default function Navbar() {
                     alignItems: 'center',
                     justifyContent: 'center'
                   }} 
-                  title="Đăng xuất"
+                  title="Sign Out"
                 >
                   <LogOut size={16} />
                 </a>

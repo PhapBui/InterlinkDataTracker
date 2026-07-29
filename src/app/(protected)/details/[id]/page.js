@@ -58,7 +58,7 @@ export default function SubmissionDetails() {
           throw new Error(result?.message || 'An error occurred while loading event details.');
         }
       } catch (err) {
-        setError(`Lỗi ở phần API Google Sheet: ${err.message}`);
+        setError(`Google Sheets API Error: ${err.message}`);
       } finally {
         setLoading(false);
       }

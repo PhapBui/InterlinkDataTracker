@@ -44,11 +44,11 @@ function LoginForm() {
   useEffect(() => {
     if (errorParam) {
       if (errorParam === 'Unauthorized') {
-        setError(`Email ${emailParam ? `(${emailParam})` : ''} không nằm trong danh sách được phép truy cập (Allowlist).`);
+        setError(`Email ${emailParam ? `(${emailParam})` : ''} is not on the allowed access list (Allowlist).`);
       } else if (errorParam === 'access_denied') {
-        setError('Bạn đã từ chối yêu cầu đăng nhập từ Google.');
+        setError('You denied the Google login request.');
       } else {
-        setError(`Lỗi đăng nhập: ${errorParam}. Vui lòng thử lại.`);
+        setError(`Login error: ${errorParam}. Please try again.`);
       }
     }
   }, [errorParam, emailParam]);
@@ -83,33 +83,33 @@ function LoginForm() {
             Google OAuth Configuration <span className="text-gradient-purple">Required</span>
           </h1>
           <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>
-            Vui lòng cấu hình Google Client ID và Client Secret trong tệp `.env.local`
+            Please configure the Google Client ID and Client Secret in your `.env.local` file
           </p>
         </div>
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem', fontSize: '0.85rem', color: 'var(--text-main)', lineHeight: '1.6' }}>
           <div style={{ background: 'rgba(255, 255, 255, 0.02)', padding: '1rem', borderRadius: '8px', border: '1px solid var(--border)' }}>
-            <strong style={{ color: 'white', display: 'block', marginBottom: '0.5rem' }}>Các bước lấy thông tin xác thực Google:</strong>
+            <strong style={{ color: 'white', display: 'block', marginBottom: '0.5rem' }}>Google OAuth Credentials Setup Steps:</strong>
             <ol style={{ paddingLeft: '1.25rem', margin: 0, display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-              <li>Truy cập trang quản trị: <a href="https://console.cloud.google.com" target="_blank" rel="noopener noreferrer" style={{ color: 'var(--primary)', textDecoration: 'underline' }}>Google Cloud Console</a>.</li>
-              <li>Tạo một dự án mới (hoặc chọn dự án hiện có).</li>
-              <li>Tìm kiếm **"Credentials"** (Thông tin xác thực) tại thanh tìm kiếm hoặc menu bên trái.</li>
-              <li>Chọn **"Configure Consent Screen"** (Cấu hình màn hình đồng ý), chọn User Type là **External**, điền thông tin app và lưu lại.</li>
-              <li>Quay lại tab **Credentials**, chọn **Create Credentials** &gt; **OAuth client ID**.</li>
-              <li>Cấu hình Client ID:
+              <li>Go to the console: <a href="https://console.cloud.google.com" target="_blank" rel="noopener noreferrer" style={{ color: 'var(--primary)', textDecoration: 'underline' }}>Google Cloud Console</a>.</li>
+              <li>Create a new project (or select an existing one).</li>
+              <li>Search for **"Credentials"** in the search bar or left navigation menu.</li>
+              <li>Select **"Configure Consent Screen"**, set User Type to **External**, fill in app information, and save.</li>
+              <li>Return to the **Credentials** tab, click **Create Credentials** &gt; **OAuth client ID**.</li>
+              <li>Configure Client ID settings:
                 <ul style={{ paddingLeft: '1rem', marginTop: '0.25rem', listStyleType: 'circle' }}>
                   <li>**Application type**: Web application.</li>
                   <li>**Name**: Event Tracker Client.</li>
-                  <li>**Authorized redirect URIs**: Thêm liên kết `http://localhost:3000/api/auth/callback` (hoặc liên kết trang web thật của bạn).</li>
+                  <li>**Authorized redirect URIs**: Add `http://localhost:3000/api/auth/callback` (or your production website link).</li>
                 </ul>
               </li>
-              <li>Nhấn **Create** để nhận **Client ID** và **Client Secret**.</li>
+              <li>Click **Create** to retrieve your **Client ID** and **Client Secret**.</li>
             </ol>
           </div>
 
           <div style={{ background: 'rgba(255, 255, 255, 0.02)', padding: '1rem', borderRadius: '8px', border: '1px solid var(--border)' }}>
-            <strong style={{ color: 'white', display: 'block', marginBottom: '0.5rem' }}>Cấu hình file môi trường:</strong>
-            <p style={{ margin: '0 0 0.5rem 0' }}>Mở file <code style={{color: '#f472b6'}}>.env.local</code> ở thư mục gốc dự án và điền thông tin sau:</p>
+            <strong style={{ color: 'white', display: 'block', marginBottom: '0.5rem' }}>Environment Configuration File:</strong>
+            <p style={{ margin: '0 0 0.5rem 0' }}>Open the <code style={{color: '#f472b6'}}>.env.local</code> file in the project root directory and enter the following settings:</p>
             <pre style={{
               background: '#090d16',
               padding: '0.75rem',
@@ -121,8 +121,8 @@ function LoginForm() {
               margin: 0,
               border: '1px solid rgba(255,255,255,0.05)'
             }}>
-{`GOOGLE_CLIENT_ID=nhập_client_id_của_bạn
-GOOGLE_CLIENT_SECRET=nhập_client_secret_của_bạn
+{`GOOGLE_CLIENT_ID=your_client_id_here
+GOOGLE_CLIENT_SECRET=your_client_secret_here
 NEXT_PUBLIC_APP_URL=http://localhost:3000`}
             </pre>
           </div>
@@ -136,7 +136,7 @@ NEXT_PUBLIC_APP_URL=http://localhost:3000`}
             color: '#fcd34d',
             textAlign: 'center'
           }}>
-            ⚠️ Sau khi lưu file `.env.local`, bạn hãy **khởi động lại server Next.js** để áp dụng thay đổi.
+            ⚠️ After saving the `.env.local` file, please **restart the Next.js dev server** to apply these changes.
           </div>
         </div>
       </div>
@@ -166,7 +166,7 @@ NEXT_PUBLIC_APP_URL=http://localhost:3000`}
           Event Tracker <span className="text-gradient-purple">Gate</span>
         </h1>
         <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>
-          Đăng nhập bằng tài khoản Google được cấp phép để truy cập
+          Log in with an authorized Google account to access the app
         </p>
       </div>
 
@@ -210,7 +210,7 @@ NEXT_PUBLIC_APP_URL=http://localhost:3000`}
             <path fill="#FBBC05" d="M3.53 10.6a5.4 5.4 0 0 1 0-3.2V5.07H.51a9 9 0 0 0 0 7.86l3.02-2.33z"/>
             <path fill="#EA4335" d="M9 3.58c1.32 0 2.5.45 3.44 1.35L15 2.4A9 9 0 0 0 .51 5.07l3.02 2.33c.72-2.16 2.74-3.82 5.47-3.82z"/>
           </svg>
-          <span style={{ fontWeight: 600 }}>{loading ? 'Đang kết nối Google...' : 'Đăng nhập với Google'}</span>
+          <span style={{ fontWeight: 600 }}>{loading ? 'Connecting to Google...' : 'Sign in with Google'}</span>
         </button>
       </div>
     </div>

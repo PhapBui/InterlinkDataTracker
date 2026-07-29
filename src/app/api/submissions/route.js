@@ -269,10 +269,10 @@ export async function POST(request) {
     const newSubmission = {
       id,
       timestamp,
-      submitter: submitter || 'Ẩn danh',
+      submitter: submitter || 'Anonymous',
       submitterEmail,
-      region: region || 'Không rõ',
-      title: title || 'Sự kiện không tiêu đề',
+      region: region || 'Unknown',
+      title: title || 'Untitled Event',
       time: time || new Date().toISOString().slice(0, 16).replace('T', ' '),
       memberCount: members ? members.length : 0,
       participantCount: parseInt(participantCount) || 0,
@@ -304,7 +304,7 @@ export async function POST(request) {
         status: 'success', 
         id, 
         isMock: true, 
-        warning: 'Ghi cục bộ thành công vào bộ nhớ tạm thời, nhưng không thể lưu file do giới hạn quyền của Vercel Serverless. Vui lòng cấu hình Google Sheets.'
+        warning: 'Saved locally in memory, but could not write file due to serverless read-only filesystem limits. Please configure Google Sheets.'
       });
     }
     
@@ -352,7 +352,7 @@ export async function PUT(request) {
     const db = await readMockDb();
     const submission = db.submissions.find(s => String(s.id) === String(id));
     if (!submission) {
-      return NextResponse.json({ status: 'error', message: 'Không tìm thấy sự kiện' }, { status: 404 });
+      return NextResponse.json({ status: 'error', message: 'Submission not found' }, { status: 404 });
     }
     
     submission.paid = paid;
