@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { regions } from '../../regions';
 import { useRouter } from 'next/navigation';
 import { Plus, Trash2, ArrowLeft, Send, Sparkles, AlertTriangle, Users, FileText, CheckCircle } from 'lucide-react';
@@ -27,6 +27,66 @@ export default function SubmitEventForm() {
   const [showDuplicateOverride, setShowDuplicateOverride] = useState(false);
   const [bulkDuplicateWarning, setBulkDuplicateWarning] = useState(null);
   const [showBulkOverride, setShowBulkOverride] = useState(false);
+
+  const [isLoaded, setIsLoaded] = useState(false);
+  const isClearingRef = useRef(false);
+
+  // Load from localStorage on mount
+  useEffect(() => {
+    try {
+      const savedData = localStorage.getItem('event_tracker_form_draft');
+      if (savedData) {
+        const parsed = JSON.parse(savedData);
+        if (parsed.submitter !== undefined) setSubmitter(parsed.submitter);
+        if (parsed.region !== undefined) setRegion(parsed.region);
+        if (parsed.title !== undefined) setTitle(parsed.title);
+        if (parsed.time !== undefined) setTime(parsed.time);
+        if (parsed.participantCount !== undefined) setParticipantCount(parsed.participantCount);
+        if (parsed.proofUrl !== undefined) setProofUrl(parsed.proofUrl);
+        if (parsed.bulkInput !== undefined) setBulkInput(parsed.bulkInput);
+        if (parsed.bulkXp !== undefined) setBulkXp(parsed.bulkXp);
+        if (parsed.bulkItlg !== undefined) setBulkItlg(parsed.bulkItlg);
+        if (parsed.bulkNote !== undefined) setBulkNote(parsed.bulkNote);
+        if (parsed.members !== undefined) setMembers(parsed.members);
+      }
+    } catch (e) {
+      console.error('Failed to load draft from localStorage:', e);
+    }
+    setIsLoaded(true);
+  }, []);
+
+  // Save to localStorage when form data changes
+  useEffect(() => {
+    if (!isLoaded || isClearingRef.current) return;
+    try {
+      const draft = {
+        submitter,
+        region,
+        title,
+        time,
+        participantCount,
+        proofUrl,
+        bulkInput,
+        bulkXp,
+        bulkItlg,
+        bulkNote,
+        members
+      };
+      localStorage.setItem('event_tracker_form_draft', JSON.stringify(draft));
+    } catch (e) {
+      console.error('Failed to save draft to localStorage:', e);
+    }
+  }, [isLoaded, submitter, region, title, time, participantCount, proofUrl, bulkInput, bulkXp, bulkItlg, bulkNote, members]);
+
+  const handleCancel = () => {
+    isClearingRef.current = true;
+    try {
+      localStorage.removeItem('event_tracker_form_draft');
+    } catch (e) {
+      console.error('Failed to clear draft from localStorage:', e);
+    }
+    router.push('/');
+  };
 
   // Auto-dismiss toasts
   useEffect(() => {
@@ -196,6 +256,12 @@ export default function SubmitEventForm() {
       }
 
       if (result && result.status === 'success') {
+        isClearingRef.current = true;
+        try {
+          localStorage.removeItem('event_tracker_form_draft');
+        } catch (e) {
+          console.error('Failed to clear draft from localStorage:', e);
+        }
         setToast({ type: 'success', message: 'Report submitted successfully!' });
         setTimeout(() => {
           router.push(`/details/${result.id}`);
@@ -660,7 +726,7 @@ export default function SubmitEventForm() {
           <button
             type="button"
             className="btn btn-secondary"
-            onClick={() => router.push('/')}
+            onClick={handleCancel}
             disabled={submitting}
           >
             Cancel
