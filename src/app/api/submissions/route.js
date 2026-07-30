@@ -88,18 +88,20 @@ function calculateDashboard(submissions, members) {
 
   const moderatorMap = new Map();
   submissions.forEach(sub => {
-    const moderator = sub.submitter || 'Anonymous';
+    const rawModerator = sub.submitter || 'Anonymous';
+    const moderator = rawModerator.trim();
+    const key = moderator.toLowerCase();
     const subStats = subStatsMap.get(sub.id) || { xp: 0, itlg: 0 };
     
-    if (!moderatorMap.has(moderator)) {
-      moderatorMap.set(moderator, {
+    if (!moderatorMap.has(key)) {
+      moderatorMap.set(key, {
         username: moderator,
         xp: 0,
         eventsCount: 0,
         leaderCount: 0
       });
     }
-    const current = moderatorMap.get(moderator);
+    const current = moderatorMap.get(key);
     current.xp += subStats.xp;
     current.eventsCount += 1;
     current.leaderCount += subStats.itlg;
