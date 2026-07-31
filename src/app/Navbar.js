@@ -73,7 +73,7 @@ export default function Navbar() {
                 paddingLeft: '0.75rem',
                 marginLeft: '0.25rem'
               }}>
-                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', lineHeight: '1.2' }}>
+                <div className="user-info-text" style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', lineHeight: '1.2' }}>
                   <span style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-main)' }}>
                     {user.name}
                   </span>

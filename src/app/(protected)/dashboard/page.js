@@ -138,7 +138,7 @@ export default function DashboardPage() {
       </div>
 
       {/* Main Grid */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 380px', gap: '2rem', alignItems: 'flex-start' }}>
+      <div className="dashboard-grid">
         
         {/* Leaderboard Column */}
         <div className="card" style={{ padding: '1.75rem' }}>

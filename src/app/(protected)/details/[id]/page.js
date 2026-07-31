@@ -271,7 +271,7 @@ export default function SubmissionDetails() {
         </div>
       )}
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 320px', gap: '2rem', alignItems: 'flex-start' }}>
+      <div className="details-grid">
         
         {/* Members list */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>

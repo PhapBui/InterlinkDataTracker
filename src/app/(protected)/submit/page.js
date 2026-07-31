@@ -493,7 +493,7 @@ export default function SubmitEventForm() {
               />
             </div>
 
-            <div className="form-group" style={{ gridColumn: 'span 2' }}>
+            <div className="form-group grid-span-2">
               <label className="form-label">Screenshot Proof Link (snipboard.io)</label>
               <input
                 id="proof-url"
