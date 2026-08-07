@@ -1,9 +1,10 @@
 import { NextResponse } from 'next/server';
-import { clearSessionCookie } from '../../../auth/session';
 
 export async function GET(request) {
   const { origin } = new URL(request.url);
   const cleanAppUrl = origin.endsWith('/') ? origin.slice(0, -1) : origin;
-  clearSessionCookie();
-  return NextResponse.redirect(`${cleanAppUrl}/login`);
+  
+  const response = NextResponse.redirect(`${cleanAppUrl}/login`);
+  response.cookies.delete('event_tracker_session');
+  return response;
 }

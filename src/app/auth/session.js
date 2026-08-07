@@ -1,11 +1,12 @@
 import { cookies } from 'next/headers';
 import crypto from 'crypto';
 
-const SESSION_SECRET = process.env.SESSION_SECRET || 
-  (process.env.NODE_ENV === 'production' 
-    ? crypto.randomBytes(32).toString('hex') 
-    : 'a-very-long-and-secure-random-secret-key-12345');
+const SESSION_SECRET = process.env.SESSION_SECRET || 'a-very-long-and-secure-random-secret-key-12345';
 const COOKIE_NAME = 'event_tracker_session';
+
+if (process.env.NODE_ENV === 'production' && !process.env.SESSION_SECRET) {
+  console.warn('WARNING: SESSION_SECRET is not configured. Using default fallback key. Please set SESSION_SECRET environment variable on Vercel.');
+}
 
 // Helper to sign session
 export function signSession(payload) {

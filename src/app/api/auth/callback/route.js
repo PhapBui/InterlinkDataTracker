@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { setSessionCookie } from '../../../auth/session';
+import { signSession } from '../../../auth/session';
 import { isAllowed, isAdmin } from '../../../auth/allowlist';
 
 export async function GET(request) {
@@ -67,17 +67,25 @@ export async function GET(request) {
       return NextResponse.redirect(`${cleanAppUrl}/login?error=Unauthorized&email=${encodeURIComponent(email)}`);
     }
 
-    // 4. Create session and set cookie
+    // 4. Create session token
     const role = isAdmin(email) ? 'admin' : 'user';
-    setSessionCookie({
+    const token = signSession({
       email,
       name: name || email.split('@')[0],
       picture: picture || '',
       role
     });
 
-    // 5. Redirect back to application home
-    return NextResponse.redirect(`${cleanAppUrl}/`);
+    // 5. Redirect back to application home with cookie set directly on response
+    const response = NextResponse.redirect(`${cleanAppUrl}/`);
+    response.cookies.set('event_tracker_session', token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge: 60 * 60 * 24 * 7, // 7 days
+      path: '/'
+    });
+    return response;
   } catch (error) {
     console.error('Authentication callback error:', error);
     return NextResponse.redirect(`${cleanAppUrl}/login?error=InternalError`);
