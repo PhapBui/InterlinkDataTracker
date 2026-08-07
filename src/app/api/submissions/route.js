@@ -152,6 +152,11 @@ function calculateDashboard(submissions, members) {
 }
 
 export async function GET(request) {
+  const session = getSession();
+  if (!session) {
+    return NextResponse.json({ status: 'error', message: 'Unauthorized' }, { status: 401 });
+  }
+
   const sheetsUrl = process.env.NEXT_PUBLIC_SHEETS_API_URL;
   const isMock = !sheetsUrl || sheetsUrl.trim() === '';
   
@@ -241,14 +246,20 @@ export async function GET(request) {
 }
 
 export async function POST(request) {
+  const session = getSession();
+  if (!session) {
+    return NextResponse.json({ status: 'error', message: 'Unauthorized' }, { status: 401 });
+  }
+
   const sheetsUrl = process.env.NEXT_PUBLIC_SHEETS_API_URL;
   const isMock = !sheetsUrl || sheetsUrl.trim() === '';
   
   try {
     const payload = await request.json();
     
-    const session = getSession();
-    const submitterEmail = session ? session.email : 'unknown@gmail.com';
+    // Force submitter name and email from session to prevent impersonation/spoofing
+    payload.submitter = session.name || payload.submitter || 'Anonymous';
+    const submitterEmail = session.email;
     
     // 1. CHẾ ĐỘ GOOGLE SHEETS
     if (!isMock) {
@@ -329,6 +340,11 @@ export async function POST(request) {
 }
 
 export async function PUT(request) {
+  const session = getSession();
+  if (!session || session.role !== 'admin') {
+    return NextResponse.json({ status: 'error', message: 'Forbidden: Admin access required' }, { status: 403 });
+  }
+
   const sheetsUrl = process.env.NEXT_PUBLIC_SHEETS_API_URL;
   const isMock = !sheetsUrl || sheetsUrl.trim() === '';
   

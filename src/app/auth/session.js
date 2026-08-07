@@ -1,7 +1,10 @@
 import { cookies } from 'next/headers';
 import crypto from 'crypto';
 
-const SESSION_SECRET = process.env.SESSION_SECRET || 'a-very-long-and-secure-random-secret-key-12345';
+const SESSION_SECRET = process.env.SESSION_SECRET || 
+  (process.env.NODE_ENV === 'production' 
+    ? crypto.randomBytes(32).toString('hex') 
+    : 'a-very-long-and-secure-random-secret-key-12345');
 const COOKIE_NAME = 'event_tracker_session';
 
 // Helper to sign session
