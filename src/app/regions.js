@@ -11,6 +11,7 @@ export const regions = [
   "In-App Event",
   "IR - Iran",
   "KR - Korea",
+  "MM - Myanmar",
   "NG - Nigeria",
   "PK - Pakistan",
   "VN - Vietnam"
