@@ -256,12 +256,109 @@ export async function POST(request) {
   
   try {
     const payload = await request.json();
+    const { id } = payload;
     
     // Force submitter name and email from session to prevent impersonation/spoofing
     payload.submitter = session.name || payload.submitter || 'Anonymous';
     const submitterEmail = session.email;
     
-    // 1. CHẾ ĐỘ GOOGLE SHEETS
+    if (id) {
+      // EDIT MODE
+      // 1. Fetch current submission to verify ownership and paid status
+      let existingSubmission;
+      if (!isMock) {
+        try {
+          const response = await fetch(`${sheetsUrl}?action=get_detail&id=${id}`, {
+            method: 'GET',
+            headers: { 'Accept': 'application/json' },
+            cache: 'no-store'
+          });
+          if (!response.ok) throw new Error(`Google Sheets fetch failed with status: ${response.status}`);
+          const result = await response.json();
+          if (result.status === 'success') {
+            existingSubmission = result.submission;
+          }
+        } catch (e) {
+          console.error('Error fetching details for verification:', e);
+          return NextResponse.json({ status: 'error', message: 'Failed to verify submission state' }, { status: 502 });
+        }
+      } else {
+        const db = await readMockDb();
+        existingSubmission = db.submissions.find(s => String(s.id) === String(id));
+      }
+
+      if (!existingSubmission) {
+        return NextResponse.json({ status: 'error', message: 'Event not found' }, { status: 404 });
+      }
+
+      // 2. Validate ownership: email must match the creator's email
+      const existingEmail = existingSubmission.submitterEmail || existingSubmission.submitteremail || '';
+      if (existingEmail.toLowerCase().trim() !== session.email.toLowerCase().trim()) {
+        return NextResponse.json({ status: 'error', message: 'Forbidden: You can only edit your own submissions' }, { status: 403 });
+      }
+
+      // 3. Validate paid status: already paid reports cannot be edited
+      const isPaid = existingSubmission.paid === true || String(existingSubmission.paid).toLowerCase() === 'true';
+      if (isPaid) {
+        return NextResponse.json({ status: 'error', message: 'Forbidden: Already paid reports cannot be edited' }, { status: 403 });
+      }
+
+      // 4. Update data
+      if (!isMock) {
+        try {
+          const response = await fetch(sheetsUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ action: 'update_submission', submitterEmail, ...payload })
+          });
+          if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+          const result = await response.json();
+          if (result.status === 'error') {
+            return NextResponse.json({ status: 'error', message: `Google Sheets API Error: ${result.message}` }, { status: 400 });
+          }
+          return NextResponse.json({ ...result, isMock: false });
+        } catch (error) {
+          console.error('Lỗi kết nối Google Sheets khi update:', error);
+          return NextResponse.json({ 
+            status: 'error', 
+            message: `Google Sheets API Error: Failed to update report. ${error.message || 'Connection failed'}.` 
+          }, { status: 502 });
+        }
+      } else {
+        const db = await readMockDb();
+        const subIdx = db.submissions.findIndex(s => String(s.id) === String(id));
+        if (subIdx !== -1) {
+          db.submissions[subIdx] = {
+            ...db.submissions[subIdx],
+            submitter: payload.submitter,
+            region: payload.region,
+            title: payload.title,
+            time: payload.time,
+            memberCount: payload.members ? payload.members.length : 0,
+            participantCount: parseInt(payload.participantCount) || 0,
+            proofUrl: payload.proofUrl || ''
+          };
+        }
+        
+        db.members = db.members.filter(m => String(m.submission_id) !== String(id));
+        if (payload.members && Array.isArray(payload.members)) {
+          payload.members.forEach(m => {
+            db.members.push({
+              submission_id: id,
+              discord_username: m.discord_username || 'unknown_user',
+              xp: parseInt(m.xp) || 0,
+              itlg: parseInt(m.itlg) || 0,
+              noted: m.noted || ''
+            });
+          });
+        }
+        
+        await writeMockDb(db);
+        return NextResponse.json({ status: 'success', id, isMock: true });
+      }
+    }
+
+    // 1. CHẾ ĐỘ GOOGLE SHEETS (CREATE MODE)
     if (!isMock) {
       try {
         const response = await fetch(sheetsUrl, {
@@ -287,13 +384,13 @@ export async function POST(request) {
     // 2. CHẾ ĐỘ MOCK DATA DỰ PHÒNG
     const db = await readMockDb();
     
-    const id = 'EVT_' + Date.now();
+    const newId = 'EVT_' + Date.now();
     const timestamp = new Date().toISOString();
     const { submitter, region, title, time, participantCount, proofUrl, members } = payload;
     
     // Tạo record Submission mới
     const newSubmission = {
-      id,
+      id: newId,
       timestamp,
       submitter: submitter || 'Anonymous',
       submitterEmail,
@@ -312,7 +409,7 @@ export async function POST(request) {
     if (members && Array.isArray(members)) {
       members.forEach(m => {
         db.members.push({
-          submission_id: id,
+          submission_id: newId,
           discord_username: m.discord_username || 'unknown_user',
           xp: parseInt(m.xp) || 0,
           itlg: parseInt(m.itlg) || 0,
@@ -324,11 +421,11 @@ export async function POST(request) {
     const success = await writeMockDb(db);
     
     if (success) {
-      return NextResponse.json({ status: 'success', id, isMock: true });
+      return NextResponse.json({ status: 'success', id: newId, isMock: true });
     } else {
       return NextResponse.json({ 
         status: 'success', 
-        id, 
+        id: newId, 
         isMock: true, 
         warning: 'Saved locally in memory, but could not write file due to serverless read-only filesystem limits. Please configure Google Sheets.'
       });

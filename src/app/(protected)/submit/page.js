@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { regions } from '../../regions';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { Plus, Trash2, ArrowLeft, Send, Sparkles, AlertTriangle, Users, FileText, CheckCircle } from 'lucide-react';
 
 export default function SubmitEventForm() {
@@ -31,8 +31,13 @@ export default function SubmitEventForm() {
   const [isLoaded, setIsLoaded] = useState(false);
   const isClearingRef = useRef(false);
 
+  const searchParams = useSearchParams();
+  const editId = searchParams.get('id');
+  const [loadingEdit, setLoadingEdit] = useState(false);
+
   // Load from localStorage on mount
   useEffect(() => {
+    if (editId) return; // Bypass draft loading in Edit Mode
     try {
       const savedData = localStorage.getItem('event_tracker_form_draft');
       if (savedData) {
@@ -53,10 +58,11 @@ export default function SubmitEventForm() {
       console.error('Failed to load draft from localStorage:', e);
     }
     setIsLoaded(true);
-  }, []);
+  }, [editId]);
 
   // Save to localStorage when form data changes
   useEffect(() => {
+    if (editId) return; // Bypass draft saving in Edit Mode
     if (!isLoaded || isClearingRef.current) return;
     try {
       const draft = {
@@ -76,7 +82,71 @@ export default function SubmitEventForm() {
     } catch (e) {
       console.error('Failed to save draft to localStorage:', e);
     }
-  }, [isLoaded, submitter, region, title, time, participantCount, proofUrl, bulkInput, bulkXp, bulkItlg, bulkNote, members]);
+  }, [isLoaded, editId, submitter, region, title, time, participantCount, proofUrl, bulkInput, bulkXp, bulkItlg, bulkNote, members]);
+
+  // Load existing event details when in Edit Mode
+  useEffect(() => {
+    if (!editId) return;
+
+    const fetchEventForEdit = async () => {
+      setLoadingEdit(true);
+      try {
+        const res = await fetch(`/api/submissions?id=${editId}`);
+        const result = await res.json();
+
+        if (res.ok && result.status === 'success') {
+          const sub = result.submission;
+          const mems = result.members || [];
+
+          // Verify if user is the creator (frontend guard)
+          const sessionRes = await fetch('/api/auth/session');
+          const sessionData = await sessionRes.json();
+
+          const subEmail = sub.submitterEmail || sub.submitteremail || '';
+          if (sessionData.loggedIn && subEmail.toLowerCase().trim() !== sessionData.user.email.toLowerCase().trim()) {
+            setError('Forbidden: You can only edit your own submissions.');
+            setTimeout(() => router.push('/'), 3000);
+            return;
+          }
+
+          const isPaid = sub.paid === true || String(sub.paid).toLowerCase() === 'true';
+          if (isPaid) {
+            setError('Forbidden: Already paid reports cannot be edited.');
+            setTimeout(() => router.push('/'), 3000);
+            return;
+          }
+
+          setSubmitter(sub.submitter || '');
+          setRegion(sub.region || 'Global');
+          setTitle(sub.title || '');
+          if (sub.time) {
+            const dateStr = new Date(sub.time).toISOString().split('T')[0];
+            setTime(dateStr);
+          }
+          setParticipantCount(sub.participantCount || sub.participantcount || 0);
+          setProofUrl(sub.proofUrl || '');
+
+          if (mems.length > 0) {
+            setMembers(mems.map(m => ({
+              discord_username: m.discord_username || '',
+              xp: parseInt(m.xp) || 0,
+              itlg: parseInt(m.itlg) || 0,
+              noted: m.noted || ''
+            })));
+          }
+        } else {
+          setError(result.message || 'Failed to fetch event details.');
+        }
+      } catch (err) {
+        console.error('Failed to load event for editing:', err);
+        setError('An error occurred while loading the event.');
+      } finally {
+        setLoadingEdit(false);
+      }
+    };
+
+    fetchEventForEdit();
+  }, [editId, router]);
 
   const handleCancel = () => {
     isClearingRef.current = true;
@@ -236,6 +306,7 @@ export default function SubmitEventForm() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
+          id: editId || undefined,
           submitter,
           region,
           title,
@@ -395,6 +466,24 @@ export default function SubmitEventForm() {
     submitData(finalMembers);
   };
 
+  if (loadingEdit) {
+    return (
+      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1rem', padding: '10rem 0' }}>
+        <div className="animate-spin" style={{ width: '40px', height: '40px', border: '4px solid var(--border)', borderTopColor: 'var(--primary)', borderRadius: '50%' }}></div>
+        <p style={{ color: 'var(--text-muted)' }}>Retrieving report details...</p>
+        <style jsx global>{`
+          @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+          }
+          .animate-spin {
+            animation: spin 1s linear infinite;
+          }
+        `}</style>
+      </div>
+    );
+  }
+
   return (
     <>
       <div className="animate-fade-in" style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
@@ -406,10 +495,10 @@ export default function SubmitEventForm() {
         </button>
         <div>
           <h1 style={{ fontSize: '2rem', fontWeight: 800, letterSpacing: '-0.5px' }}>
-            Submit <span className="text-gradient-purple">Weekly Report</span>
+            {editId ? 'Edit' : 'Submit'} <span className="text-gradient-purple">Weekly Report</span>
           </h1>
           <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>
-            Report weekly events held in your region. Data will be saved to Google Sheets.
+            {editId ? 'Modify the report details. Changes will be saved to Google Sheets.' : 'Report weekly events held in your region. Data will be saved to Google Sheets.'}
           </p>
         </div>
       </div>

@@ -244,6 +244,66 @@ function doPost(e) {
         .setMimeType(ContentService.MimeType.JSON);
     }
     
+    if (action === "update_submission") {
+      var id = payload.id;
+      var submitter = payload.submitter;
+      var region = payload.region;
+      var title = payload.title;
+      var time = payload.time;
+      var participantCount = Number(payload.participantCount) || 0;
+      var proofUrl = payload.proofUrl || "";
+      var members = payload.members || [];
+      
+      var subRows = submissionsSheet.getDataRange().getValues();
+      var found = false;
+      for (var i = 1; i < subRows.length; i++) {
+        if (String(subRows[i][0]) === String(id)) {
+          submissionsSheet.getRange(i + 1, 3).setValue(submitter);
+          submissionsSheet.getRange(i + 1, 4).setValue(region);
+          submissionsSheet.getRange(i + 1, 5).setValue(title);
+          submissionsSheet.getRange(i + 1, 6).setValue(time);
+          submissionsSheet.getRange(i + 1, 7).setValue(members.length);
+          submissionsSheet.getRange(i + 1, 8).setValue(participantCount);
+          submissionsSheet.getRange(i + 1, 9).setValue(proofUrl);
+          found = true;
+          break;
+        }
+      }
+      
+      if (!found) {
+        return ContentService.createTextOutput(JSON.stringify({ status: "error", message: "Event not found" }))
+          .setMimeType(ContentService.MimeType.JSON);
+      }
+      
+      if (membersSheet) {
+        var memRows = membersSheet.getDataRange().getValues();
+        for (var i = memRows.length - 1; i >= 1; i--) {
+          if (String(memRows[i][0]) === String(id)) {
+            membersSheet.deleteRow(i + 1);
+          }
+        }
+        
+        if (members && members.length > 0) {
+          var memberRows = [];
+          for (var i = 0; i < members.length; i++) {
+            var m = members[i];
+            memberRows.push([
+              id, 
+              m.discord_username, 
+              m.xp, 
+              Number(m.itlg) || 0, 
+              m.noted || ""
+            ]);
+          }
+          var nextRow = membersSheet.getLastRow() + 1;
+          membersSheet.getRange(nextRow, 1, memberRows.length, 5).setValues(memberRows);
+        }
+      }
+      
+      return ContentService.createTextOutput(JSON.stringify({ status: "success", id: id }))
+        .setMimeType(ContentService.MimeType.JSON);
+    }
+    
     if (action === "update_paid") {
       var id = payload.id;
       var paid = payload.paid;

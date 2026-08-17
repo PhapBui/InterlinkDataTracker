@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
-import { ArrowLeft, User, Calendar, MapPin, CheckCircle, Copy, Check, Info, Sparkles, FileSpreadsheet, Star } from 'lucide-react';
+import { ArrowLeft, User, Calendar, MapPin, CheckCircle, Copy, Check, Info, Sparkles, FileSpreadsheet, Star, Edit3 } from 'lucide-react';
 
 export default function SubmissionDetails() {
   const router = useRouter();
@@ -212,6 +212,9 @@ export default function SubmissionDetails() {
   const totalXp = members.reduce((sum, m) => sum + (parseInt(m.xp) || 0), 0);
   const totalItlg = members.reduce((sum, m) => sum + (parseInt(m.itlg) || 0), 0);
 
+  const submitterEmail = submission.submitterEmail || submission.submitteremail || '';
+  const isCreator = currentUser && submitterEmail.toLowerCase().trim() === currentUser.email.toLowerCase().trim();
+
   return (
     <>
       <div className="animate-fade-in" style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
@@ -230,7 +233,7 @@ export default function SubmissionDetails() {
           </div>
         </div>
         
-        <div style={{ display: 'flex', gap: '0.75rem' }}>
+        <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
           <button 
             onClick={handleCopyDiscordFormat} 
             className="btn btn-secondary"
@@ -239,6 +242,17 @@ export default function SubmissionDetails() {
             {copied ? <Check size={18} style={{ color: 'var(--success)' }} /> : <Copy size={18} />}
             <span>{copied ? 'Copied Discord Format!' : 'Copy Discord Format'}</span>
           </button>
+
+          {isCreator && !verified && (
+            <button 
+              onClick={() => router.push(`/submit?id=${id}`)}
+              className="btn btn-secondary"
+              style={{ borderColor: 'rgba(217, 70, 239, 0.3)', background: 'rgba(217, 70, 239, 0.05)' }}
+            >
+              <Edit3 size={18} />
+              <span>Edit Report</span>
+            </button>
+          )}
           
           {currentUser?.role === 'admin' && (
             <button 
