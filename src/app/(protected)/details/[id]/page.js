@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
-import { ArrowLeft, User, Calendar, MapPin, CheckCircle, Copy, Check, Info, Sparkles, FileSpreadsheet, Star, Edit3 } from 'lucide-react';
+import { ArrowLeft, User, Calendar, MapPin, CheckCircle, Copy, Check, Info, Sparkles, FileSpreadsheet, Star, Edit3, History } from 'lucide-react';
 
 export default function SubmissionDetails() {
   const router = useRouter();
@@ -208,7 +208,7 @@ export default function SubmissionDetails() {
     );
   }
 
-  const { submission, members, isMock } = data;
+  const { submission, members, history = [], isMock } = data;
   const totalXp = members.reduce((sum, m) => sum + (parseInt(m.xp) || 0), 0);
   const totalItlg = members.reduce((sum, m) => sum + (parseInt(m.itlg) || 0), 0);
 
@@ -337,6 +337,52 @@ export default function SubmissionDetails() {
               </table>
             </div>
           </div>
+
+          {/* Edit History Log Timeline */}
+          {history && history.length > 0 && (
+            <div className="card" style={{ padding: '1.5rem' }}>
+              <h2 style={{ fontSize: '1.15rem', fontWeight: 700, marginBottom: '1.25rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <History size={18} style={{ color: 'var(--accent)' }} />
+                <span>Modification Logs</span>
+              </h2>
+              
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem', position: 'relative', paddingLeft: '1.25rem', borderLeft: '2px solid var(--border)' }}>
+                {history.map((log, idx) => {
+                  const logEmail = log.editorEmail || log.editor_email || log.editoremail || '';
+                  const logName = log.editorName || log.editor_name || log.editorname || 'Anonymous';
+                  const logTime = log.timestamp || log.time || '';
+                  const logDetails = log.details || '';
+                  
+                  return (
+                    <div key={log.id || idx} style={{ position: 'relative' }}>
+                      {/* Glowing timeline dot */}
+                      <div style={{ 
+                        position: 'absolute', 
+                        left: 'calc(-1.25rem - 7px)', 
+                        top: '4px', 
+                        width: '12px', 
+                        height: '12px', 
+                        borderRadius: '50%', 
+                        background: 'var(--accent)', 
+                        border: '2px solid var(--bg-main)',
+                        boxShadow: '0 0 10px var(--accent)'
+                      }} />
+                      
+                      <div style={{ fontSize: '0.85rem', color: 'var(--text-dim)', display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
+                        <span style={{ fontWeight: 600, color: 'var(--text-main)' }}>{logName}</span>
+                        <span>({logEmail})</span>
+                        <span style={{ fontSize: '0.75rem' }}>• {formatDate(logTime)}</span>
+                      </div>
+                      
+                      <p style={{ marginTop: '0.35rem', fontSize: '0.9rem', color: 'var(--text-muted)', lineHeight: '1.4' }}>
+                        {logDetails}
+                      </p>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Sidebar Summary details */}

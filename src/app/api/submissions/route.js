@@ -236,7 +236,8 @@ export async function GET(request) {
       return NextResponse.json({ status: 'error', message: 'Không tìm thấy sự kiện', isMock: true }, { status: 404 });
     }
     const members = db.members.filter(m => String(m.submission_id) === String(id));
-    return NextResponse.json({ status: 'success', submission, members, isMock: true });
+    const history = db.editHistory ? db.editHistory.filter(h => String(h.submission_id) === String(id)) : [];
+    return NextResponse.json({ status: 'success', submission, members, history, isMock: true });
   } else if (type === 'dashboard') {
     const stats = calculateDashboard(db.submissions, db.members);
     return NextResponse.json({ status: 'success', data: stats, isMock: true });
@@ -328,6 +329,15 @@ export async function POST(request) {
         const db = await readMockDb();
         const subIdx = db.submissions.findIndex(s => String(s.id) === String(id));
         if (subIdx !== -1) {
+          const currentSub = db.submissions[subIdx];
+          const changes = [];
+          if (currentSub.submitter !== payload.submitter) changes.push(`Submitter (${currentSub.submitter} -> ${payload.submitter})`);
+          if (currentSub.region !== payload.region) changes.push(`Region (${currentSub.region} -> ${payload.region})`);
+          if (currentSub.title !== payload.title) changes.push(`Title (${currentSub.title} -> ${payload.title})`);
+          if (currentSub.time !== payload.time) changes.push(`Time (${currentSub.time} -> ${payload.time})`);
+          if (currentSub.participantCount !== parseInt(payload.participantCount)) changes.push(`Participants (${currentSub.participantCount} -> ${payload.participantCount})`);
+          if (currentSub.proofUrl !== payload.proofUrl) changes.push(`Proof URL`);
+
           db.submissions[subIdx] = {
             ...db.submissions[subIdx],
             submitter: payload.submitter,
@@ -338,6 +348,19 @@ export async function POST(request) {
             participantCount: parseInt(payload.participantCount) || 0,
             proofUrl: payload.proofUrl || ''
           };
+
+          if (!db.editHistory) {
+            db.editHistory = [];
+          }
+          const logDetails = changes.length > 0 ? `Modified: ${changes.join(', ')}` : 'Updated member list rewards';
+          db.editHistory.push({
+            id: 'LOG_' + Date.now(),
+            submission_id: id,
+            timestamp: new Date().toISOString(),
+            editor_email: session.email,
+            editor_name: session.name || 'Anonymous',
+            details: logDetails
+          });
         }
         
         db.members = db.members.filter(m => String(m.submission_id) !== String(id));

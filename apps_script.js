@@ -21,6 +21,7 @@ function ensureHeaders() {
   var ss = SpreadsheetApp.getActiveSpreadsheet();
   var submissionsSheet = ss.getSheetByName("Submissions") || ss.insertSheet("Submissions");
   var membersSheet = ss.getSheetByName("Members") || ss.insertSheet("Members");
+  var historySheet = ss.getSheetByName("EditHistory") || ss.insertSheet("EditHistory");
   
   // 1. Kiểm tra bảng Submissions
   if (submissionsSheet.getLastRow() === 0) {
@@ -84,6 +85,11 @@ function ensureHeaders() {
   // 2. Kiểm tra bảng Members
   if (membersSheet.getLastRow() === 0) {
     membersSheet.appendRow(["submission_id", "discord_username", "xp", "itlg", "noted"]);
+  }
+
+  // 3. Kiểm tra bảng EditHistory
+  if (historySheet.getLastRow() === 0) {
+    historySheet.appendRow(["id", "submission_id", "timestamp", "editor_email", "editor_name", "details"]);
   }
 }
 
@@ -187,11 +193,28 @@ function doGet(e) {
         }
       }
     }
+
+    var historyData = [];
+    var historySheet = ss.getSheetByName("EditHistory");
+    if (historySheet) {
+      var histRows = historySheet.getDataRange().getValues();
+      var histHeaders = histRows[0];
+      for (var i = 1; i < histRows.length; i++) {
+        if (String(histRows[i][1]) === String(id)) {
+          var entry = {};
+          for (var j = 0; j < histHeaders.length; j++) {
+            entry[histHeaders[j]] = histRows[i][j];
+          }
+          historyData.push(entry);
+        }
+      }
+    }
     
     return ContentService.createTextOutput(JSON.stringify({ 
       status: "success", 
       submission: subData, 
-      members: memberData 
+      members: memberData,
+      history: historyData
     })).setMimeType(ContentService.MimeType.JSON);
   }
   
@@ -256,8 +279,21 @@ function doPost(e) {
       
       var subRows = submissionsSheet.getDataRange().getValues();
       var found = false;
+      var changes = [];
       for (var i = 1; i < subRows.length; i++) {
         if (String(subRows[i][0]) === String(id)) {
+          // Compare changes before updating
+          if (String(subRows[i][2]) !== String(submitter)) changes.push("Submitter (" + subRows[i][2] + " -> " + submitter + ")");
+          if (String(subRows[i][3]) !== String(region)) changes.push("Region (" + subRows[i][3] + " -> " + region + ")");
+          if (String(subRows[i][4]) !== String(title)) changes.push("Title (" + subRows[i][4] + " -> " + title + ")");
+          
+          var oldTimeStr = subRows[i][5] instanceof Date ? subRows[i][5].toISOString().split('T')[0] : String(subRows[i][5]).split(' ')[0];
+          var newTimeStr = String(time).split(' ')[0];
+          if (oldTimeStr !== newTimeStr) changes.push("Time (" + oldTimeStr + " -> " + newTimeStr + ")");
+          
+          if (Number(subRows[i][7]) !== Number(participantCount)) changes.push("Participants (" + subRows[i][7] + " -> " + participantCount + ")");
+          if (String(subRows[i][8]) !== String(proofUrl)) changes.push("Proof URL");
+
           submissionsSheet.getRange(i + 1, 3).setValue(submitter);
           submissionsSheet.getRange(i + 1, 4).setValue(region);
           submissionsSheet.getRange(i + 1, 5).setValue(title);
@@ -273,6 +309,15 @@ function doPost(e) {
       if (!found) {
         return ContentService.createTextOutput(JSON.stringify({ status: "error", message: "Event not found" }))
           .setMimeType(ContentService.MimeType.JSON);
+      }
+
+      // Log to EditHistory sheet
+      var historySheet = ss.getSheetByName("EditHistory");
+      if (historySheet) {
+        var logId = "LOG_" + new Date().getTime() + "_" + Math.floor(Math.random() * 1000);
+        var logTime = new Date().toISOString();
+        var details = changes.length > 0 ? "Modified: " + changes.join(", ") : "Updated member list rewards";
+        historySheet.appendRow([logId, id, logTime, submitterEmail, submitter, details]);
       }
       
       if (membersSheet) {
