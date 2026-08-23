@@ -259,8 +259,8 @@ export async function POST(request) {
     const payload = await request.json();
     const { id } = payload;
     
-    // Force submitter name and email from session to prevent impersonation/spoofing
-    payload.submitter = session.name || payload.submitter || 'Anonymous';
+    // Use the submitter name typed by the user, fallback to Google profile name if empty
+    payload.submitter = payload.submitter || session.name || 'Anonymous';
     const submitterEmail = session.email;
     
     if (id) {
