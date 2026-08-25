@@ -159,6 +159,41 @@ function doGet(e) {
     return ContentService.createTextOutput(JSON.stringify({ status: "success", data: data }))
       .setMimeType(ContentService.MimeType.JSON);
       
+  } else if (action === "get_dashboard") {
+    var subRows = submissionsSheet.getDataRange().getValues();
+    var subData = [];
+    if (subRows.length > 1) {
+      var subHeaders = subRows[0];
+      for (var i = 1; i < subRows.length; i++) {
+        var item = {};
+        for (var j = 0; j < subHeaders.length; j++) {
+          item[subHeaders[j]] = subRows[i][j];
+        }
+        subData.push(item);
+      }
+    }
+    
+    var memData = [];
+    if (membersSheet) {
+      var memRows = membersSheet.getDataRange().getValues();
+      if (memRows.length > 1) {
+        var memHeaders = memRows[0];
+        for (var i = 1; i < memRows.length; i++) {
+          var item = {};
+          for (var j = 0; j < memHeaders.length; j++) {
+            item[memHeaders[j]] = memRows[i][j];
+          }
+          memData.push(item);
+        }
+      }
+    }
+    
+    return ContentService.createTextOutput(JSON.stringify({ 
+      status: "success", 
+      submissions: subData, 
+      members: memData 
+    })).setMimeType(ContentService.MimeType.JSON);
+      
   } else if (action === "get_detail" && id) {
     var subRows = submissionsSheet.getDataRange().getValues();
     var subHeaders = subRows[0];

@@ -7,6 +7,28 @@ import { getSession } from '../../auth/session';
 // Đường dẫn tới file mock_db.json
 const getMockDbPath = () => path.join(process.cwd(), 'mock_db.json');
 
+// Fetch wrapper with automatic retry logic to handle temporary network or rate limit limits (404/503/etc)
+async function fetchWithRetry(url, options = {}, retries = 2, delay = 300) {
+  for (let i = 0; i <= retries; i++) {
+    try {
+      const response = await fetch(url, options);
+      if (response.ok) {
+        return response;
+      }
+      if (i < retries && (response.status === 404 || response.status >= 500)) {
+        console.warn(`Fetch returned status ${response.status}. Retrying in ${delay}ms... (Attempt ${i + 1}/${retries})`);
+        await new Promise(res => setTimeout(res, delay));
+        continue;
+      }
+      return response;
+    } catch (err) {
+      if (i === retries) throw err;
+      console.warn(`Fetch error: ${err.message}. Retrying in ${delay}ms... (Attempt ${i + 1}/${retries})`);
+      await new Promise(res => setTimeout(res, delay));
+    }
+  }
+}
+
 // Chuẩn hóa tên khóa (keys) nhận từ Google Sheets để tránh lỗi lệch kiểu chữ và dấu cách
 function normalizeKeys(obj) {
   if (obj === null || obj === undefined) return obj;
@@ -169,7 +191,7 @@ export async function GET(request) {
     try {
       if (id) {
         // Lấy chi tiết sự kiện
-        const response = await fetch(`${sheetsUrl}?action=get_detail&id=${id}`, {
+        const response = await fetchWithRetry(`${sheetsUrl}?action=get_detail&id=${id}`, {
           method: 'GET',
           headers: { 'Accept': 'application/json' },
           cache: 'no-store'
@@ -182,17 +204,33 @@ export async function GET(request) {
         const normalizedResult = normalizeKeys(result);
         return NextResponse.json({ ...normalizedResult, isMock: false });
       } else if (type === 'dashboard') {
-        // Lấy đồng thời cả submissions và members để tự động tính toán dashboard
-        const [subRes, memRes] = await Promise.all([
-          fetch(`${sheetsUrl}?action=get_all`, { cache: 'no-store' }),
-          fetch(`${sheetsUrl}?action=get_members`, { cache: 'no-store' })
-        ]);
-        
-        if (!subRes.ok || !memRes.ok) {
-          throw new Error(`Failed to fetch dashboard components. Submissions HTTP: ${subRes.status}, Members HTTP: ${memRes.status}`);
+        // Try unified query first (1 request instead of 2 concurrent ones, avoiding rate limits)
+        try {
+          const response = await fetchWithRetry(`${sheetsUrl}?action=get_dashboard`, {
+            method: 'GET',
+            headers: { 'Accept': 'application/json' },
+            cache: 'no-store'
+          });
+          if (response.ok) {
+            const result = await response.json();
+            if (result.status === 'success') {
+              const normSubData = normalizeKeys(result.submissions || result.data?.submissions || []);
+              const normMemData = normalizeKeys(result.members || result.data?.members || []);
+              const stats = calculateDashboard(normSubData, normMemData);
+              return NextResponse.json({ status: 'success', data: stats, isMock: false });
+            }
+          }
+        } catch (e) {
+          console.warn('Unified dashboard query failed, falling back to sequential legacy fetches:', e);
         }
-        
+
+        // FALLBACK: Sequential fetches (Avoid Promise.all to prevent concurrent request blocks on Google Apps Script)
+        const subRes = await fetchWithRetry(`${sheetsUrl}?action=get_all`, { cache: 'no-store' });
+        if (!subRes.ok) throw new Error(`Submissions legacy fetch failed with status: ${subRes.status}`);
         const subData = await subRes.json();
+
+        const memRes = await fetchWithRetry(`${sheetsUrl}?action=get_members`, { cache: 'no-store' });
+        if (!memRes.ok) throw new Error(`Members legacy fetch failed with status: ${memRes.status}`);
         const memData = await memRes.json();
         
         if (subData.status === 'success' && memData.status === 'success') {
@@ -205,7 +243,7 @@ export async function GET(request) {
         }
       } else {
         // Lấy toàn bộ sự kiện
-        const response = await fetch(`${sheetsUrl}?action=get_all`, {
+        const response = await fetchWithRetry(`${sheetsUrl}?action=get_all`, {
           method: 'GET',
           headers: { 'Accept': 'application/json' },
           cache: 'no-store'
@@ -269,7 +307,7 @@ export async function POST(request) {
       let existingSubmission;
       if (!isMock) {
         try {
-          const response = await fetch(`${sheetsUrl}?action=get_detail&id=${id}`, {
+          const response = await fetchWithRetry(`${sheetsUrl}?action=get_detail&id=${id}`, {
             method: 'GET',
             headers: { 'Accept': 'application/json' },
             cache: 'no-store'
@@ -307,7 +345,7 @@ export async function POST(request) {
       // 4. Update data
       if (!isMock) {
         try {
-          const response = await fetch(sheetsUrl, {
+          const response = await fetchWithRetry(sheetsUrl, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ action: 'update_submission', submitterEmail, ...payload })
@@ -384,7 +422,7 @@ export async function POST(request) {
     // 1. CHẾ ĐỘ GOOGLE SHEETS (CREATE MODE)
     if (!isMock) {
       try {
-        const response = await fetch(sheetsUrl, {
+        const response = await fetchWithRetry(sheetsUrl, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ action: 'submit', submitterEmail, ...payload })
@@ -479,7 +517,7 @@ export async function PUT(request) {
     // 1. GOOGLE SHEETS MODE
     if (!isMock) {
       try {
-        const response = await fetch(sheetsUrl, {
+        const response = await fetchWithRetry(sheetsUrl, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ action: 'update_paid', id, paid })
