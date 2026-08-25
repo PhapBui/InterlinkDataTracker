@@ -179,7 +179,7 @@ export async function GET(request) {
     return NextResponse.json({ status: 'error', message: 'Unauthorized' }, { status: 401 });
   }
 
-  const sheetsUrl = process.env.NEXT_PUBLIC_SHEETS_API_URL;
+  const sheetsUrl = process.env.SHEETS_API_URL || process.env.NEXT_PUBLIC_SHEETS_API_URL;
   const isMock = !sheetsUrl || sheetsUrl.trim() === '';
   
   const { searchParams } = new URL(request.url);
@@ -290,7 +290,7 @@ export async function POST(request) {
     return NextResponse.json({ status: 'error', message: 'Unauthorized' }, { status: 401 });
   }
 
-  const sheetsUrl = process.env.NEXT_PUBLIC_SHEETS_API_URL;
+  const sheetsUrl = process.env.SHEETS_API_URL || process.env.NEXT_PUBLIC_SHEETS_API_URL;
   const isMock = !sheetsUrl || sheetsUrl.trim() === '';
   
   try {
@@ -503,7 +503,7 @@ export async function PUT(request) {
     return NextResponse.json({ status: 'error', message: 'Forbidden: Admin access required' }, { status: 403 });
   }
 
-  const sheetsUrl = process.env.NEXT_PUBLIC_SHEETS_API_URL;
+  const sheetsUrl = process.env.SHEETS_API_URL || process.env.NEXT_PUBLIC_SHEETS_API_URL;
   const isMock = !sheetsUrl || sheetsUrl.trim() === '';
   
   try {
